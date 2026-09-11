@@ -1,7 +1,16 @@
 // In-memory demo backend. Reuses the SAME pure domain logic (planCapture,
 // applyAttribution, chooseAssignee, scoreLead) that mirrors the trusted SQL, so
 // demo behavior matches production semantics. Data resets on reload.
-import type { Activity, Contact, ContactStage, DashboardStats, OrgMemberInfo, OrgSettings } from "@/types";
+import type {
+  Activity,
+  Contact,
+  ContactStage,
+  DashboardStats,
+  OrgMemberInfo,
+  OrgSettings,
+  TaskItem,
+  TaskStatus,
+} from "@/types";
 import {
   applyAttribution,
   chooseAssignee,
@@ -10,7 +19,7 @@ import {
   scoreLead,
 } from "@/lib/domain/lead";
 import { DEFAULT_AUTOMATION_LIMITS } from "@/lib/domain/automation";
-import type { CaptureLeadRequest, CrmApi } from "./types";
+import type { CaptureLeadRequest, CreateTaskRequest, CrmApi } from "./types";
 
 const ORG_ID = "demo-org";
 const DEMO_USERS: OrgMemberInfo[] = [
@@ -21,6 +30,7 @@ const DEMO_USERS: OrgMemberInfo[] = [
 
 let contactSeq = 0;
 let activitySeq = 0;
+let taskSeq = 0;
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -30,6 +40,7 @@ export class DemoApi implements CrmApi {
   readonly mode = "demo" as const;
   private contacts = new Map<string, Contact>();
   private activities: Activity[] = [];
+  private tasks = new Map<string, TaskItem>();
   private captureRequests = new Map<string, string>();
   private settings: OrgSettings = {
     org_id: ORG_ID,
@@ -203,6 +214,48 @@ export class DemoApi implements CrmApi {
     if (from === stage) return;
     contact.stage = stage;
     this.pushActivity(contactId, "human", "stage_change", `Stage: ${from} → ${stage}`, null, { from, to: stage }, "u-broker");
+  }
+
+  async listTasks(): Promise<TaskItem[]> {
+    return [...this.tasks.values()].sort((a, b) => {
+      if (a.status !== b.status) return a.status === "open" ? -1 : 1;
+      return (a.due_at ?? "9999").localeCompare(b.due_at ?? "9999");
+    });
+  }
+
+  async createTask(req: CreateTaskRequest): Promise<string> {
+    const title = req.title.trim();
+    if (title === "") throw new Error("task title is required");
+    if (req.contactId && !this.contacts.has(req.contactId)) {
+      throw new Error("contact not found");
+    }
+    const id = `t-${++taskSeq}`;
+    this.tasks.set(id, {
+      id,
+      org_id: ORG_ID,
+      contact_id: req.contactId ?? null,
+      created_by: "u-broker",
+      assigned_to: "u-broker",
+      title,
+      body: req.body?.trim() || null,
+      status: "open",
+      due_at: req.dueAt ?? null,
+      created_at: nowIso(),
+    });
+    if (req.contactId) {
+      this.pushActivity(req.contactId, "human", "task", `Task created: ${title}`, null, { task_id: id }, "u-broker");
+    }
+    return id;
+  }
+
+  async setTaskStatus(taskId: string, status: TaskStatus): Promise<void> {
+    const task = this.tasks.get(taskId);
+    if (!task) throw new Error("task not found");
+    if (task.status === status) return;
+    task.status = status;
+    if (task.contact_id) {
+      this.pushActivity(task.contact_id, "human", "task", `Task ${status}: ${task.title}`, null, { task_id: taskId }, "u-broker");
+    }
   }
 
   async listMembers(): Promise<OrgMemberInfo[]> {

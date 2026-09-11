@@ -76,6 +76,21 @@ export interface Activity {
   occurred_at: string;
 }
 
+export type TaskStatus = "open" | "completed" | "cancelled";
+
+export interface TaskItem {
+  id: string;
+  org_id: string;
+  contact_id: string | null;
+  created_by: string | null;
+  assigned_to: string | null;
+  title: string;
+  body: string | null;
+  status: TaskStatus;
+  due_at: string | null;
+  created_at: string;
+}
+
 export interface OrgSettings {
   org_id: string;
   ai_enabled: boolean;

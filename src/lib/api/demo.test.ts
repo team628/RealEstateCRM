@@ -97,6 +97,22 @@ describe("DemoApi vertical slice: capture → contact → timeline → assignmen
     expect(assignees.size).toBeGreaterThanOrEqual(3);
   });
 
+  it("creates and completes tasks, logging contact-linked ones to the timeline", async () => {
+    const api = new DemoApi();
+    const [c] = await api.listContacts();
+    const taskId = await api.createTask({ title: "Call about showing", contactId: c.id });
+    let tasks = await api.listTasks();
+    expect(tasks.find((t) => t.id === taskId)?.status).toBe("open");
+    await api.setTaskStatus(taskId, "completed");
+    tasks = await api.listTasks();
+    expect(tasks.find((t) => t.id === taskId)?.status).toBe("completed");
+    const { activities } = (await api.getContact(c.id))!;
+    const taskEvents = activities.filter((a) => a.activity_type === "task");
+    expect(taskEvents.length).toBe(2);
+    await expect(api.createTask({ title: "  " })).rejects.toThrow(/title/);
+    await expect(api.createTask({ title: "x", contactId: "nope" })).rejects.toThrow(/not found/);
+  });
+
   it("rejects empty notes and unknown contacts", async () => {
     const api = new DemoApi();
     const [c] = await api.listContacts();

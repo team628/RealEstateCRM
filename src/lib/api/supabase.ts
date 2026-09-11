@@ -1,8 +1,17 @@
 // Real backend implementation. Authorization and integrity are enforced by RLS
 // and SQL RPCs (see supabase/migrations) — this layer is convenience only.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Activity, Contact, ContactStage, DashboardStats, OrgMemberInfo, OrgSettings } from "@/types";
-import type { CaptureLeadRequest, CrmApi } from "./types";
+import type {
+  Activity,
+  Contact,
+  ContactStage,
+  DashboardStats,
+  OrgMemberInfo,
+  OrgSettings,
+  TaskItem,
+  TaskStatus,
+} from "@/types";
+import type { CaptureLeadRequest, CreateTaskRequest, CrmApi } from "./types";
 
 export function getSupabaseEnv(): { url: string; anonKey: string } | null {
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -18,6 +27,53 @@ export class SupabaseApi implements CrmApi {
 
   constructor(url: string, anonKey: string) {
     this.client = createClient(url, anonKey);
+  }
+
+  // --- auth & onboarding (used by AuthGate; supabase mode only) ---
+
+  async getSessionUserId(): Promise<string | null> {
+    const { data } = await this.client.auth.getSession();
+    return data.session?.user.id ?? null;
+  }
+
+  onAuthChange(callback: () => void): () => void {
+    const { data } = this.client.auth.onAuthStateChange(() => callback());
+    return () => data.subscription.unsubscribe();
+  }
+
+  async signIn(email: string, password: string): Promise<void> {
+    const { error } = await this.client.auth.signInWithPassword({ email, password });
+    if (error) throw new Error(error.message);
+  }
+
+  /** Returns true when a session exists immediately; false when email confirmation is pending. */
+  async signUp(email: string, password: string, fullName: string): Promise<boolean> {
+    const { data, error } = await this.client.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName } },
+    });
+    if (error) throw new Error(error.message);
+    return data.session !== null;
+  }
+
+  async signOut(): Promise<void> {
+    this.orgId = null;
+    const { error } = await this.client.auth.signOut();
+    if (error) throw new Error(error.message);
+  }
+
+  async hasOrgMembership(): Promise<boolean> {
+    const { data, error } = await this.client.from("org_members").select("org_id").limit(1);
+    if (error) throw new Error(error.message);
+    return (data ?? []).length > 0;
+  }
+
+  async createOrganization(name: string): Promise<string> {
+    const { data, error } = await this.client.rpc("create_organization", { p_name: name });
+    if (error) throw new Error(error.message);
+    this.orgId = null; // re-resolve on next use
+    return data as string;
   }
 
   private async requireOrgId(): Promise<string> {
@@ -147,6 +203,77 @@ export class SupabaseApi implements CrmApi {
       metadata: { from: existing.stage, to: stage },
     });
     if (actErr) throw new Error(actErr.message);
+  }
+
+  async listTasks(): Promise<TaskItem[]> {
+    const orgId = await this.requireOrgId();
+    const { data, error } = await this.client
+      .from("tasks")
+      .select("*")
+      .eq("org_id", orgId)
+      .order("status", { ascending: true })
+      .order("due_at", { ascending: true, nullsFirst: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as TaskItem[];
+  }
+
+  async createTask(req: CreateTaskRequest): Promise<string> {
+    const title = req.title.trim();
+    if (title === "") throw new Error("task title is required");
+    const orgId = await this.requireOrgId();
+    const userId = await this.requireUserId();
+    const { data, error } = await this.client
+      .from("tasks")
+      .insert({
+        org_id: orgId,
+        contact_id: req.contactId ?? null,
+        assigned_to: userId,
+        title,
+        body: req.body?.trim() || null,
+        due_at: req.dueAt ?? null,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    const taskId = data.id as string;
+    if (req.contactId) {
+      const { error: actErr } = await this.client.from("activities").insert({
+        org_id: orgId,
+        contact_id: req.contactId,
+        actor_type: "human",
+        actor_user_id: userId,
+        activity_type: "task",
+        title: `Task created: ${title}`,
+        metadata: { task_id: taskId },
+      });
+      if (actErr) throw new Error(actErr.message);
+    }
+    return taskId;
+  }
+
+  async setTaskStatus(taskId: string, status: TaskStatus): Promise<void> {
+    const orgId = await this.requireOrgId();
+    const userId = await this.requireUserId();
+    const { data, error } = await this.client
+      .from("tasks")
+      .update({ status })
+      .eq("id", taskId)
+      .select("title, contact_id")
+      .single();
+    if (error) throw new Error(error.message);
+    if (data?.contact_id) {
+      const { error: actErr } = await this.client.from("activities").insert({
+        org_id: orgId,
+        contact_id: data.contact_id,
+        actor_type: "human",
+        actor_user_id: userId,
+        activity_type: "task",
+        title: `Task ${status}: ${data.title}`,
+        metadata: { task_id: taskId },
+      });
+      if (actErr) throw new Error(actErr.message);
+    }
   }
 
   async listMembers(): Promise<OrgMemberInfo[]> {

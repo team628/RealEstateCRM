@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, LayoutDashboard, Settings, UserPlus, Users } from "lucide-react";
+import { Building2, LayoutDashboard, ListTodo, Settings, UserPlus, Users } from "lucide-react";
 import { getApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +8,7 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/contacts", label: "Contacts", icon: Users, end: false },
   { to: "/leads/new", label: "New Lead", icon: UserPlus, end: false },
+  { to: "/tasks", label: "Tasks", icon: ListTodo, end: false },
   { to: "/settings", label: "Settings", icon: Settings, end: false },
 ];
 
@@ -42,9 +43,18 @@ export default function Layout() {
           ))}
         </nav>
         {user && (
-          <p className="hidden px-4 pb-4 text-xs text-muted-foreground md:block">
-            Signed in as {user.name}
-          </p>
+          <div className="hidden px-4 pb-4 md:block">
+            <p className="text-xs text-muted-foreground">Signed in as {user.name}</p>
+            {api.mode === "supabase" && (
+              <button
+                type="button"
+                className="mt-1 text-xs text-primary hover:underline"
+                onClick={() => void (api as import("@/lib/api/supabase").SupabaseApi).signOut()}
+              >
+                Sign out
+              </button>
+            )}
+          </div>
         )}
       </aside>
       <div className="flex-1">

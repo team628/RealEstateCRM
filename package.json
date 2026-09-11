@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:test": "bash db/harness/run-db-tests.sh",
+    "test:e2e": "node e2e/smoke.mjs",
     "verify": "npm run typecheck && npm run test && npm run build && npm run db:test"
   },
   "dependencies": {
@@ -31,6 +32,7 @@
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react-swc": "^3.5.0",
     "autoprefixer": "^10.4.20",
+    "playwright-core": "^1.63.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",

@@ -273,6 +273,40 @@ select tests.assert_denied(
   'human activities must be attributed to the caller');
 
 -- ---------------------------------------------------------------------------
+-- KI-001: an org must always retain at least one owner
+-- ---------------------------------------------------------------------------
+select tests.login(:'ua');
+
+select tests.assert_denied(
+  format('update public.org_members set role = %L where org_id = %L and user_id = %L',
+         'admin', :'orga_id', :'ua'),
+  'sole owner cannot demote themselves');
+
+select tests.assert_denied(
+  format('delete from public.org_members where org_id = %L and user_id = %L',
+         :'orga_id', :'ua'),
+  'sole owner cannot remove themselves');
+
+-- With a second owner present, ownership changes are allowed again
+with promote as (
+  update public.org_members set role = 'owner'
+  where org_id = :'orga_id' and user_id = :'uc' returning 1)
+select tests.assert((select count(*) from promote) = 1, 'owner can promote a second owner');
+with demote as (
+  update public.org_members set role = 'agent'
+  where org_id = :'orga_id' and user_id = :'uc' returning 1)
+select tests.assert((select count(*) from demote) = 1,
+  'non-last owner can be demoted');
+
+-- Deleting an entire organization still works (cascade is exempt from the guard)
+select tests.login(:'ub');
+select public.create_organization('Throwaway Org') as orgc_id
+\gset
+with del as (delete from public.organizations where id = :'orgc_id' returning 1)
+select tests.assert((select count(*) from del) = 1,
+  'org deletion cascades past the last-owner guard');
+
+-- ---------------------------------------------------------------------------
 -- Anonymous access: nothing visible, nothing writable
 -- ---------------------------------------------------------------------------
 select tests.login(null);

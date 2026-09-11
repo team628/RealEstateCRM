@@ -5,7 +5,16 @@ import type {
   DashboardStats,
   OrgMemberInfo,
   OrgSettings,
+  TaskItem,
+  TaskStatus,
 } from "@/types";
+
+export interface CreateTaskRequest {
+  title: string;
+  body?: string;
+  contactId?: string | null;
+  dueAt?: string | null;
+}
 
 export interface CaptureLeadRequest {
   idempotencyKey: string;
@@ -33,6 +42,9 @@ export interface CrmApi {
   captureLead(req: CaptureLeadRequest): Promise<string>;
   addNote(contactId: string, body: string): Promise<void>;
   updateStage(contactId: string, stage: ContactStage): Promise<void>;
+  listTasks(): Promise<TaskItem[]>;
+  createTask(req: CreateTaskRequest): Promise<string>;
+  setTaskStatus(taskId: string, status: TaskStatus): Promise<void>;
   listMembers(): Promise<OrgMemberInfo[]>;
   getSettings(): Promise<OrgSettings>;
   updateSettings(patch: Partial<OrgSettings>): Promise<OrgSettings>;
