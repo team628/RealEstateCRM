@@ -113,6 +113,62 @@ describe("DemoApi vertical slice: capture → contact → timeline → assignmen
     await expect(api.createTask({ title: "x", contactId: "nope" })).rejects.toThrow(/not found/);
   });
 
+  it("AUTO-001: new lead triggers the follow-up workflow (task + system activity)", async () => {
+    const api = new DemoApi();
+    const id = await api.captureLead({
+      idempotencyKey: "test-key-auto-00001",
+      firstName: "Auto",
+      lastName: "Lead",
+      email: "auto@example.com",
+      phone: "",
+      source: "website",
+    });
+    const tasks = await api.listTasks();
+    const followUp = tasks.find((t) => t.contact_id === id && t.title === "Follow up with new lead");
+    expect(followUp).toBeDefined();
+    expect(followUp!.status).toBe("open");
+    const { contact, activities } = (await api.getContact(id))!;
+    expect(followUp!.assigned_to).toBe(contact.assigned_to);
+    expect(
+      activities.some((a) => a.actor_type === "system" && a.activity_type === "task"),
+    ).toBe(true);
+    expect(api.automationRuns.at(-1)?.status).toBe("succeeded");
+  });
+
+  it("AUTO-001: kill switch stops the workflow before any action (§17)", async () => {
+    const api = new DemoApi();
+    await api.updateSettings({ automations_enabled: false });
+    const id = await api.captureLead({
+      idempotencyKey: "test-key-auto-00002",
+      firstName: "Silent",
+      lastName: "Lead",
+      email: "silent@example.com",
+      phone: "",
+      source: "website",
+    });
+    const tasks = await api.listTasks();
+    expect(tasks.some((t) => t.contact_id === id)).toBe(false);
+    const lastRun = api.automationRuns.at(-1);
+    expect(lastRun?.status).toBe("aborted");
+    expect(lastRun?.reason).toMatch(/kill switch/);
+  });
+
+  it("AUTO-001: replayed captures do not re-run the workflow", async () => {
+    const api = new DemoApi();
+    const req = {
+      idempotencyKey: "test-key-auto-00003",
+      firstName: "Once",
+      lastName: "Only",
+      email: "once@example.com",
+      phone: "",
+      source: "website",
+    };
+    await api.captureLead(req);
+    const runsAfterFirst = api.automationRuns.length;
+    await api.captureLead(req); // replay: no new contact, no new event
+    expect(api.automationRuns.length).toBe(runsAfterFirst);
+  });
+
   it("rejects empty notes and unknown contacts", async () => {
     const api = new DemoApi();
     const [c] = await api.listContacts();

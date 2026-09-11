@@ -10,7 +10,7 @@ RED = not production-viable · YELLOW = partial/needs work · GREEN = production
 | Tenant Isolation | GREEN (schema layer) | Executed RLS test suite passing |
 | CRM | YELLOW | Vertical slice verified (demo mode + e2e); auth/live-backend UI pending (KI-003) |
 | AI | RED | Not started (needs AI-001; key = OA-003) |
-| Automations | RED | Guardrail schema only; engine not built |
+| Automations | YELLOW | Engine core verified (guardrails, kill switches, loop protection); needs server-side host + config UI |
 | Communications | RED | Not started (providers = OA-004) |
 | Website | RED | In-app capture only |
 | MLS | RED | Not started (OA-005) |

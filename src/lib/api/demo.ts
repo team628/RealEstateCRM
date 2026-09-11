@@ -19,7 +19,28 @@ import {
   scoreLead,
 } from "@/lib/domain/lead";
 import { DEFAULT_AUTOMATION_LIMITS } from "@/lib/domain/automation";
+import {
+  processEvent,
+  type EngineEvent,
+  type RunRecord,
+  type WorkflowDef,
+} from "@/lib/domain/workflow";
 import type { CaptureLeadRequest, CreateTaskRequest, CrmApi } from "./types";
+
+// Built-in demo workflows (AUTO-001). In production these live in org config.
+const DEMO_WORKFLOWS: WorkflowDef[] = [
+  {
+    key: "new_lead_followup",
+    trigger: "lead.captured",
+    enabled: true,
+    actions: [
+      {
+        type: "create_task",
+        params: { title: "Follow up with new lead", dueInHours: 24 },
+      },
+    ],
+  },
+];
 
 const ORG_ID = "demo-org";
 const DEMO_USERS: OrgMemberInfo[] = [
@@ -31,6 +52,7 @@ const DEMO_USERS: OrgMemberInfo[] = [
 let contactSeq = 0;
 let activitySeq = 0;
 let taskSeq = 0;
+let eventSeq = 0;
 
 function nowIso(): string {
   return new Date().toISOString();
@@ -41,6 +63,7 @@ export class DemoApi implements CrmApi {
   private contacts = new Map<string, Contact>();
   private activities: Activity[] = [];
   private tasks = new Map<string, TaskItem>();
+  readonly automationRuns: RunRecord[] = [];
   private captureRequests = new Map<string, string>();
   private settings: OrgSettings = {
     org_id: ORG_ID,
@@ -97,7 +120,68 @@ export class DemoApi implements CrmApi {
   }
 
   async captureLead(req: CaptureLeadRequest): Promise<string> {
-    return this.doCapture(req);
+    const before = this.contacts.size;
+    const contactId = this.doCapture(req);
+    if (this.contacts.size > before) {
+      await this.fireEvent("lead.captured", { contactId });
+    }
+    return contactId;
+  }
+
+  // AUTO-001: runs the workflow engine with kill switches + guardrails applied.
+  private async fireEvent(type: string, payload: Record<string, unknown>): Promise<void> {
+    const event: EngineEvent = {
+      id: `evt-${++eventSeq}`,
+      type,
+      orgId: ORG_ID,
+      payload,
+      depth: 0,
+      correlationId: `corr-${eventSeq}`,
+      occurredAt: nowIso(),
+    };
+    await processEvent(event, DEMO_WORKFLOWS, {
+      now: nowIso,
+      limits: this.settings.automation_limits,
+      automationsEnabled: (workflowKey) =>
+        this.settings.automations_enabled &&
+        this.settings.workflow_overrides[workflowKey] !== false,
+      findRecentRun: (workflowKey, dedupKey) =>
+        this.automationRuns.find(
+          (r) => r.workflowKey === workflowKey && r.dedupKey === dedupKey,
+        )?.startedAt ?? null,
+      recordRun: (run) => this.automationRuns.push(run),
+      executeAction: async (action, event2) => {
+        if (action.type === "create_task") {
+          const contactId = event2.payload.contactId as string;
+          const contact = this.contacts.get(contactId);
+          if (!contact) throw new Error("automation target contact not found");
+          const dueInHours = Number(action.params.dueInHours ?? 24);
+          const id = `t-${++taskSeq}`;
+          this.tasks.set(id, {
+            id,
+            org_id: ORG_ID,
+            contact_id: contactId,
+            created_by: null,
+            assigned_to: contact.assigned_to,
+            title: String(action.params.title ?? "Follow up"),
+            body: null,
+            status: "open",
+            due_at: new Date(Date.now() + dueInHours * 3600 * 1000).toISOString(),
+            created_at: nowIso(),
+          });
+          this.pushActivity(
+            contactId,
+            "system",
+            "task",
+            `Automation: ${String(action.params.title ?? "task created")}`,
+            null,
+            { task_id: id, workflow: "new_lead_followup" },
+          );
+          return;
+        }
+        throw new Error(`unknown automation action type: ${action.type}`);
+      },
+    });
   }
 
   private doCapture(req: CaptureLeadRequest): string {

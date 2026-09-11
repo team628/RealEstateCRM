@@ -22,10 +22,10 @@ See KNOWN_ISSUES.md.
 None for current work. Future-phase items in EXTERNAL_REQUIREMENTS.md / OWNER_ACTIONS.md.
 
 ## NEXT HIGHEST-PRIORITY ACTION
-1. AUTO-001 workflow engine using the tested guardrail functions (first workflow:
-   new-lead follow-up task).
-2. Contact merge tooling; contact type/consent editing UI.
-3. Verify auth flow live the moment OA-002 provides a Supabase project.
+1. Contact editing UI (type, consent states, assignee) + merge tooling.
+2. Automation run visibility (Settings: recent runs + health, §23).
+3. AI-001 provider abstraction (contract + edge-function skeleton; key = OA-003).
+4. Verify auth flow live the moment OA-002 provides a Supabase project.
 
 ## CHECKPOINTS
 - **CHECKPOINT 01 — Foundation Secure: DONE 2026-09-11** (commit 19b2718).
@@ -37,7 +37,10 @@ None for current work. Future-phase items in EXTERNAL_REQUIREMENTS.md / OWNER_AC
 - **CHECKPOINT 02b — 2026-09-11:** KI-001 fixed (owner guard, verified in db suite);
   auth + org onboarding UI for Supabase mode (implemented, live-unverified — KI-003);
   Tasks feature end-to-end in demo mode (unit + e2e verified). e2e now 17 checks.
-- **CHECKPOINT 03 — Opportunity Intelligence Functional:** *(pending)*
+- **CHECKPOINT 03 (partial) — 2026-09-11:** AUTO-001 engine core verified: pure
+  workflow engine (kill switches, dedup, loop protection incl. recursive-chain
+  termination, action budgets, run log) + first workflow "new_lead_followup"
+  live in demo mode. 44 unit tests, 18 e2e checks, db suite all passing.
 
 ## HOW TO RUN VERIFICATION LOCALLY
 ```

@@ -43,15 +43,18 @@ await see(page.getByText("Met at the open house"), "note appears on timeline");
 await page.getByLabel("Stage").selectOption("engaged");
 await see(page.getByText("Stage: new → engaged"), "stage change recorded on timeline");
 
-// Tasks: create, complete, verify timeline linkage
+// AUTO-001: capturing Taylor should have auto-created a follow-up task
 await page.getByRole("link", { name: "Tasks" }).click();
+await see(page.getByText("Follow up with new lead").first(), "automation created a follow-up task");
+
+// Tasks: create, complete, verify timeline linkage
 await page.getByLabel("Title").fill("Follow up with Taylor");
 await page.getByLabel("Contact (optional)").selectOption({ label: "Taylor Tester" });
 await page.getByRole("button", { name: "Add task" }).click();
 await see(page.getByText("Follow up with Taylor"), "task created and listed");
 await page.getByRole("button", { name: "Complete" }).first().click();
 await see(page.getByText(/Done \(/), "task moves to done");
-await page.getByRole("link", { name: /Taylor Tester/ }).click();
+await page.getByRole("link", { name: /Taylor Tester/ }).first().click();
 await see(page.getByText("Task created: Follow up with Taylor"), "task event on contact timeline");
 
 await page.getByRole("link", { name: "Settings" }).click();

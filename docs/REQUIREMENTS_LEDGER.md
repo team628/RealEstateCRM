@@ -65,8 +65,15 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
 - **Note:** action-request pattern + ai_actions idempotency table already in schema.
 
 ## AUTO-001 — Workflow/automation engine
-- **Phase:** P3 · **Deps:** SEC-001 · **Impl:** IN PROGRESS
-  (guardrail settings + kill switches + execution log schema landed; engine pending)
+- **Phase:** P3 · **Deps:** SEC-001
+- **Impl:** VERIFIED (engine core + demo mode): pure `processEvent` engine with
+  kill-switch gate, dedup window, depth/retry/action-budget guardrails, run
+  recording; loop-protection proven by executed tests (self-triggering workflow
+  terminates at max_depth). First workflow (new-lead follow-up task) verified in
+  demo mode + browser e2e. PENDING for production: server-side execution host
+  (edge function/DB trigger), workflow configuration UI, retry scheduling.
+- **Files:** `src/lib/domain/workflow.ts`, `src/lib/domain/automation.ts`,
+  `src/lib/api/demo.ts`; schema: `automation_runs`, `org_settings.automation_limits`.
 
 ## COMM-001 — Communications (email/SMS/voice)
 - **Phase:** P4 · **External:** providers · **Impl:** NOT STARTED
