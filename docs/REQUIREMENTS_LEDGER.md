@@ -88,8 +88,15 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
   `src/lib/api/demo.ts`; schema: `automation_runs`, `org_settings.automation_limits`.
 
 ## COMM-001 — Communications (email/SMS/voice)
-- **Phase:** P4 · **External:** providers · **Impl:** NOT STARTED
-  (consent flags on contacts + kill switches landed)
+- **Phase:** P4 · **External:** providers (OA-004)
+- **Impl:** foundation VERIFIED (schema layer): all outbound messages must pass
+  through `queue_message` (SECURITY DEFINER; direct outbox inserts have no
+  policy and are proven denied), which enforces consent-granted, kill switches,
+  destination presence, idempotent replay, and audit logging — all covered by
+  executed assertions in `db/tests/02_comms_export_test.sql`. Nothing sends yet:
+  provider adapters that drain `queued` rows are NOT STARTED and blocked on
+  OA-004. Voice: NOT STARTED.
+- **Files:** `supabase/migrations/00005_outbox_and_export.sql`, `db/tests/02_*`
 
 ## MLS-001 — MLS provider interface
 - **Phase:** P4 · **External:** MLS agreement · **Impl:** NOT STARTED
@@ -111,4 +118,10 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
   no update/delete for members; covered by executed tests.
 
 ## DATA-001 — Data ownership / export
-- **Phase:** P5 · **Impl:** NOT STARTED (documented in ARCHITECTURE.md)
+- **Phase:** P5
+- **Impl:** VERIFIED (schema layer + demo UI): `export_org_data` returns the
+  full org dataset (contacts, timeline, tasks, transactions, insights, outbox,
+  audit trail, settings, members) as JSON; owner-only and cross-org denial
+  proven by executed tests. Settings-page download button (owner-gated) in
+  both API modes; live-Supabase path shares the standard OA-002 caveat.
+  Large-org streaming export (edge function, chunked) is a future scale item.

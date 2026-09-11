@@ -437,6 +437,20 @@ export class DemoApi implements CrmApi {
     return structuredClone(this.settings);
   }
 
+  async exportOrgData(): Promise<Record<string, unknown>> {
+    return {
+      exported_at: nowIso(),
+      organization: { id: ORG_ID, name: "Demo Brokerage" },
+      settings: structuredClone(this.settings),
+      members: DEMO_USERS,
+      contacts: [...this.contacts.values()],
+      activities: this.activities,
+      tasks: [...this.tasks.values()],
+      ai_insights: this.insights,
+      automation_runs: this.automationRuns,
+    };
+  }
+
   async dashboardStats(): Promise<DashboardStats> {
     const contacts = [...this.contacts.values()];
     const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;

@@ -7,10 +7,11 @@
 P1 Foundation → P2 CRM Core (in progress)
 
 ## LAST VERIFIED MILESTONE
-CHECKPOINT 02 (2026-09-11): CRM vertical slice functional and verified end-to-end
-in demo mode; DB layer verified by isolation suite. Verification executed:
-typecheck ✓, 32 unit tests ✓, production build ✓, db:test isolation suite ✓,
-browser e2e smoke (13 checks, zero console errors) ✓.
+CHECKPOINT 04 (2026-09-11): CRM core + automation engine + AI classification
+pipeline + consent-enforced comms outbox + org data export. Verification
+executed: typecheck ✓, 55 unit tests ✓, production build ✓, db:test (isolation +
+comms/export suites, 5 migrations from zero) ✓, browser e2e smoke (26 checks,
+zero console errors) ✓.
 
 ## ACTIVE WORKSTREAM
 Foundation bootstrap: schema+RLS, isolation test harness, lead-capture vertical slice.
@@ -22,10 +23,12 @@ See KNOWN_ISSUES.md.
 None for current work. Future-phase items in EXTERNAL_REQUIREMENTS.md / OWNER_ACTIONS.md.
 
 ## NEXT HIGHEST-PRIORITY ACTION
-1. Contact editing UI (type, consent states, assignee) + merge tooling.
-2. Automation run visibility (Settings: recent runs + health, §23).
-3. AI-001 provider abstraction (contract + edge-function skeleton; key = OA-003).
-4. Verify auth flow live the moment OA-002 provides a Supabase project.
+1. When OA-002 lands (Supabase project): apply migrations, verify auth flow,
+   capture RPC, edge function live — the single biggest unlock.
+2. TXN-001 UI slice (create transaction from contact, pipeline board, GCI).
+3. Email/SMS provider adapters draining the outbox (OA-004) + contracts docs.
+4. Contact merge tooling; KI-005 membership-validating assignee trigger.
+5. Reporting (RPT-001) once transactions carry data.
 
 ## CHECKPOINTS
 - **CHECKPOINT 01 — Foundation Secure: DONE 2026-09-11** (commit 19b2718).
@@ -41,6 +44,11 @@ None for current work. Future-phase items in EXTERNAL_REQUIREMENTS.md / OWNER_AC
   workflow engine (kill switches, dedup, loop protection incl. recursive-chain
   termination, action budgets, run log) + first workflow "new_lead_followup"
   live in demo mode. 44 unit tests, 18 e2e checks, db suite all passing.
+- **CHECKPOINT 04 — 2026-09-11:** AI-001 classification pipeline (injection
+  fencing, PII minimization, provenance, kill-switch gate) verified in demo;
+  edge function implemented-unverified. COMM-001 outbox with SQL-enforced
+  consent + switches and DATA-001 owner-only export both verified by the DB
+  suite. Contact editing + automation health view live.
 
 ## HOW TO RUN VERIFICATION LOCALLY
 ```

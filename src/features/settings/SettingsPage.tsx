@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { getApi } from "@/lib/api";
 import type { OrgSettings } from "@/types";
 
@@ -25,6 +26,18 @@ export default function SettingsPage() {
   const mutation = useMutation({
     mutationFn: (patch: Partial<OrgSettings>) => api.updateSettings(patch),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["orgSettings"] }),
+  });
+  const exportMutation = useMutation({
+    mutationFn: () => api.exportOrgData(),
+    onSuccess: (data) => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `crm-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
   });
   const { data: runs } = useQuery({
     queryKey: ["automationRuns"],
@@ -134,6 +147,30 @@ export default function SettingsPage() {
                 </li>
               ))}
             </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Data export</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Download all of this organization&apos;s data as JSON (contacts, timeline,
+            tasks, transactions, insights, audit trail). Owners only.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            disabled={exportMutation.isPending || user?.role !== "owner"}
+            onClick={() => exportMutation.mutate()}
+          >
+            {exportMutation.isPending ? "Exporting…" : "Download export"}
+          </Button>
+          {exportMutation.error instanceof Error && (
+            <p role="alert" className="mt-2 text-sm text-destructive">
+              {exportMutation.error.message}
+            </p>
           )}
         </CardContent>
       </Card>

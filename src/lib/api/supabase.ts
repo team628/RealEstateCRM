@@ -387,6 +387,13 @@ export class SupabaseApi implements CrmApi {
     return data as OrgSettings;
   }
 
+  async exportOrgData(): Promise<Record<string, unknown>> {
+    const orgId = await this.requireOrgId();
+    const { data, error } = await this.client.rpc("export_org_data", { p_org_id: orgId });
+    if (error) throw new Error(error.message);
+    return data as Record<string, unknown>;
+  }
+
   async dashboardStats(): Promise<DashboardStats> {
     const contacts = await this.listContacts();
     const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;

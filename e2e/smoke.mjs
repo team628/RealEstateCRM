@@ -82,6 +82,8 @@ await page.waitForFunction(
 );
 console.log("ok - SMS kill switch toggles off");
 
+await see(page.getByRole("button", { name: "Download export" }), "data export available to owner");
+
 const fatal = errors.filter((e) => !e.includes("favicon"));
 assert(fatal.length === 0, "no console/page errors (" + fatal.join("; ") + ")");
 

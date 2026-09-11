@@ -73,4 +73,6 @@ export interface CrmApi {
   getSettings(): Promise<OrgSettings>;
   updateSettings(patch: Partial<OrgSettings>): Promise<OrgSettings>;
   dashboardStats(): Promise<DashboardStats>;
+  /** DATA-001: whole-org export. Owner-only (enforced server-side in production). */
+  exportOrgData(): Promise<Record<string, unknown>>;
 }

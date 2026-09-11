@@ -11,7 +11,7 @@ RED = not production-viable · YELLOW = partial/needs work · GREEN = production
 | CRM | YELLOW | Vertical slice verified (demo mode + e2e); auth/live-backend UI pending (KI-003) |
 | AI | YELLOW | Classification pipeline + injection/PII/kill-switch defenses verified in demo; live provider path unverified (OA-002/OA-003); real-model evals pending |
 | Automations | YELLOW | Engine core verified (guardrails, kill switches, loop protection); needs server-side host + config UI |
-| Communications | RED | Not started (providers = OA-004) |
+| Communications | YELLOW | Consent+kill-switch-enforced outbox verified at DB layer; no send adapters yet (OA-004); voice not started |
 | Website | RED | In-app capture only |
 | MLS | RED | Not started (OA-005) |
 | Transactions | RED | Schema stub only |

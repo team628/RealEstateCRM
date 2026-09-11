@@ -1,5 +1,10 @@
 # KNOWN ISSUES
 
+- **KI-005 (P5, integrity):** `tasks.assigned_to` and `contacts.assigned_to`
+  accept any auth.users id, not just org members (FK only). No cross-tenant data
+  leak (RLS still hides the org's data from the assignee), but a mis-assignment
+  is silently possible. Fix: membership-validating trigger.
+
 - **KI-002 (P6, performance):** Main JS bundle is ~560 kB minified (React + supabase
   + react-query in one chunk). Add route-level code splitting when the app grows.
 - **KI-003 (P2, partially resolved):** Sign-in/sign-up, org-creation onboarding and
