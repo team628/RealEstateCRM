@@ -57,8 +57,20 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
   db:test and unit tests; assignment activity on timeline verified by e2e.
 
 ## AI-001 — AI provider abstraction
-- **Phase:** P3 · **Deps:** SEC-001 · **External:** provider API keys
-- **Impl:** NOT STARTED (contract defined in ARCHITECTURE.md §AI)
+- **Phase:** P3 · **Deps:** SEC-001 · **External:** Anthropic API key (OA-003)
+- **Impl:** split status:
+  - VERIFIED (pipeline + defenses, demo mode): provider contract with schema-
+    validated output; §25 injection fencing (marker-smuggling neutralized, tested);
+    §26 PII minimization (only presence flags + fenced message leave the CRM,
+    tested); §17 kill-switch gate incl. per-agent override (tested); §14
+    provenance-tagged ai_insights that never overwrite contact facts (tested);
+    UI card with confidence display (e2e).
+  - IMPLEMENTED — NOT YET VERIFIED: `supabase/functions/ai-classify-lead`
+    (Claude via official SDK, structured outputs, RLS-scoped user client,
+    refusal handling). Needs a Supabase project + ANTHROPIC_API_KEY to verify,
+    then real-model evaluation per docs/AI_EVALUATIONS.md before production.
+- **Files:** `src/lib/ai/*`, `supabase/functions/ai-classify-lead/`,
+  `supabase/migrations/00004_channel_enabled_rpc.sql`
 
 ## AI-002 — AI Sales Agent
 - **Phase:** P3 · **Deps:** AI-001, AUTO-001, COMM-001 · **Impl:** NOT STARTED

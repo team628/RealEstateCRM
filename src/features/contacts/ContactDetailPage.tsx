@@ -33,6 +33,83 @@ const CONSENT_FIELDS = [
   ["call_consent", "Call consent"],
 ] as const;
 
+function AiInsightsCard({ contactId }: { contactId: string }) {
+  const api = getApi();
+  const queryClient = useQueryClient();
+  const { data: insights } = useQuery({
+    queryKey: ["insights", contactId],
+    queryFn: () => api.listInsights(contactId),
+  });
+  const classifyMutation = useMutation({
+    mutationFn: () => api.classifyContact(contactId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["insights", contactId] });
+      void queryClient.invalidateQueries({ queryKey: ["contact", contactId] });
+    },
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>AI insights</CardTitle>
+          <Button
+            variant="outline"
+            disabled={classifyMutation.isPending}
+            onClick={() => classifyMutation.mutate()}
+          >
+            {classifyMutation.isPending ? "Classifying…" : "Run AI classification"}
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          AI-inferred, shown with confidence — never overwrites verified contact facts.
+        </p>
+      </CardHeader>
+      <CardContent>
+        {classifyMutation.error instanceof Error && (
+          <p role="alert" className="mb-2 text-sm text-destructive">
+            {classifyMutation.error.message}
+          </p>
+        )}
+        {!insights || insights.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No insights yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {insights.map((i) => {
+              const v = i.value as Record<string, unknown>;
+              return (
+                <li key={i.id} className="rounded-md border border-border p-3 text-sm">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge tone="primary">AI INFERRED</Badge>
+                    <span className="font-medium">
+                      {String(v.intent ?? "?")} intent · {String(v.contact_type ?? "?")}
+                    </span>
+                    {typeof i.confidence === "number" && (
+                      <span className="text-xs text-muted-foreground">
+                        confidence {(i.confidence * 100).toFixed(0)}%
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-muted-foreground">
+                    Urgency {String(v.urgency ?? "?")} · seller probability{" "}
+                    {typeof v.seller_probability === "number"
+                      ? `${(v.seller_probability * 100).toFixed(0)}%`
+                      : "?"}
+                  </p>
+                  {i.reasoning && <p className="mt-1">{i.reasoning}</p>}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {i.model} · {formatDistanceToNow(new Date(i.created_at), { addSuffix: true })}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function ActivityRow({ activity }: { activity: Activity }) {
   const when = formatDistanceToNow(new Date(activity.occurred_at), { addSuffix: true });
   return (
@@ -242,7 +319,9 @@ export default function ContactDetailPage() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2">
+        <div className="space-y-4 md:col-span-2">
+        <AiInsightsCard contactId={id} />
+        <Card>
           <CardHeader>
             <CardTitle>Timeline</CardTitle>
           </CardHeader>
@@ -286,6 +365,7 @@ export default function ContactDetailPage() {
             )}
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

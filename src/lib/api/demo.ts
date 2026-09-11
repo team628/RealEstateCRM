@@ -25,6 +25,8 @@ import {
   type RunRecord,
   type WorkflowDef,
 } from "@/lib/domain/workflow";
+import { FakeAiProvider } from "@/lib/ai/fake";
+import type { AiInsight } from "@/lib/ai/types";
 import type {
   AutomationRunSummary,
   CaptureLeadRequest,
@@ -70,6 +72,8 @@ export class DemoApi implements CrmApi {
   private activities: Activity[] = [];
   private tasks = new Map<string, TaskItem>();
   readonly automationRuns: RunRecord[] = [];
+  private insights: AiInsight[] = [];
+  private aiProvider = new FakeAiProvider();
   private captureRequests = new Map<string, string>();
   private settings: OrgSettings = {
     org_id: ORG_ID,
@@ -317,6 +321,51 @@ export class DemoApi implements CrmApi {
         to: patch.assigned_to ?? null,
       }, "u-broker");
     }
+  }
+
+  async classifyContact(contactId: string): Promise<AiInsight> {
+    const contact = this.contacts.get(contactId);
+    if (!contact) throw new Error("contact not found");
+    // §17: kill switch checked before any AI work, exactly like production.
+    if (!this.settings.ai_enabled || this.settings.agent_overrides["lead_classifier"] === false) {
+      throw new Error("AI actions are disabled for this organization");
+    }
+    const capture = [...this.activities]
+      .reverse()
+      .find((a) => a.contact_id === contactId && a.activity_type === "capture" && a.body);
+    // §26 PII minimization: same minimal fields as the production edge function.
+    const classification = await this.aiProvider.classifyLead({
+      firstName: contact.first_name,
+      lastName: contact.last_name,
+      source: contact.original_source,
+      sourceDetail: contact.original_source_detail,
+      message: capture?.body ?? null,
+      hasEmail: contact.email !== null,
+      hasPhone: contact.phone !== null,
+    });
+    const insight: AiInsight = {
+      id: `i-${this.insights.length + 1}`,
+      contact_id: contactId,
+      kind: "lead_classification",
+      value: classification,
+      source: "ai_inferred",
+      confidence: classification.confidence,
+      model: this.aiProvider.model,
+      reasoning: classification.reasoning,
+      created_at: nowIso(),
+    };
+    this.insights.push(insight);
+    this.pushActivity(contactId, "ai", "system", "AI classification recorded", null, {
+      insight_id: insight.id,
+      model: this.aiProvider.model,
+    });
+    return insight;
+  }
+
+  async listInsights(contactId: string): Promise<AiInsight[]> {
+    return this.insights
+      .filter((i) => i.contact_id === contactId)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
   }
 
   async listAutomationRuns(limit = 20): Promise<AutomationRunSummary[]> {

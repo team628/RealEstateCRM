@@ -237,6 +237,25 @@ export class SupabaseApi implements CrmApi {
     }
   }
 
+  async classifyContact(contactId: string): Promise<import("@/lib/ai/types").AiInsight> {
+    const { data, error } = await this.client.functions.invoke("ai-classify-lead", {
+      body: { contact_id: contactId },
+    });
+    if (error) throw new Error(error.message);
+    return (data as { insight: import("@/lib/ai/types").AiInsight }).insight;
+  }
+
+  async listInsights(contactId: string): Promise<import("@/lib/ai/types").AiInsight[]> {
+    const { data, error } = await this.client
+      .from("ai_insights")
+      .select("id, contact_id, kind, value, source, confidence, model, reasoning, created_at")
+      .eq("contact_id", contactId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as import("@/lib/ai/types").AiInsight[];
+  }
+
   async listAutomationRuns(limit = 20): Promise<AutomationRunSummary[]> {
     const orgId = await this.requireOrgId();
     const { data, error } = await this.client

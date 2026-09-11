@@ -1,7 +1,11 @@
 # AI EVALUATIONS
 
-No AI functionality is implemented yet (AI-001 NOT STARTED). This framework is
-defined now so the first AI feature lands with evaluations, not after.
+Status: the lead-classification pipeline exists (AI-001). Its *mechanical*
+defenses are covered by executed unit tests (fencing, PII minimization, schema
+validity, kill switch) — but no real-model evaluation has run yet because no
+API key exists (OA-003). Suite 1 below must be populated with representative
+cases and run against the live provider before the classifier is production
+ready. The deterministic FakeAiProvider is NOT evidence of model quality.
 
 ## Scenario suites (to be populated with representative cases as features land)
 1. Lead classification (buyer/seller/renter/agent-recruit/spam)

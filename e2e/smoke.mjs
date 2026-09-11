@@ -36,6 +36,11 @@ await see(page.getByText("Lead captured"), "capture activity on timeline");
 await see(page.getByText("Lead assigned"), "assignment activity on timeline");
 await see(page.getByText("open_house").first(), "original source shown");
 
+// AI-001: run classification in demo mode
+await page.getByRole("button", { name: "Run AI classification" }).click();
+await see(page.getByText("AI INFERRED").first(), "AI insight recorded with provenance badge");
+await see(page.getByText(/confidence \d+%/), "insight shows confidence");
+
 await page.getByLabel("Add a note").fill("Met at the open house, wants a follow-up");
 await page.getByRole("button", { name: "Save note" }).click();
 await see(page.getByText("Met at the open house"), "note appears on timeline");
