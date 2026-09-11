@@ -9,7 +9,8 @@ Status: `NOT BUILT` | `PARTIAL (segments listed)` | `FUNCTIONAL — NOT VERIFIED
 - **J03 Seller → Valuation → CMA → Listing Appointment** — NOT BUILT
 - **J04 Lead Reactivation → AI → Appointment** — NOT BUILT (needs AI-001/002)
 - **J05 Open House → CRM → Follow-Up** — NOT BUILT
-- **J06 Contract → Transaction → Closing** — NOT BUILT (schema stub only)
+- **J06 Contract → Transaction → Closing** — PARTIAL: transaction create →
+  status pipeline → closed GCI verified (e2e, demo); milestones/checklists pending.
 - **J07 Closing → Homeowner → Future Seller** — NOT BUILT
 - **J08 Listing → Marketing → Buyer Match** — NOT BUILT
 - **J09 Recruit → Appointment → Onboarding** — NOT BUILT

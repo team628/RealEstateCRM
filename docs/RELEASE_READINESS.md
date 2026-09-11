@@ -14,7 +14,7 @@ RED = not production-viable · YELLOW = partial/needs work · GREEN = production
 | Communications | YELLOW | Consent+kill-switch-enforced outbox verified at DB layer; no send adapters yet (OA-004); voice not started |
 | Website | RED | In-app capture only |
 | MLS | RED | Not started (OA-005) |
-| Transactions | RED | Schema stub only |
+| Transactions | YELLOW | Create/status/GCI slice verified in demo; milestones + splits pending |
 | Reporting | RED | Not started |
 | Mobile | YELLOW | Responsive layout baseline |
 | Performance | YELLOW | Indexed FKs; no load testing yet |

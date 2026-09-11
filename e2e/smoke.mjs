@@ -68,6 +68,17 @@ await see(page.getByText(/Done \(/), "task moves to done");
 await page.getByRole("link", { name: /Taylor Tester/ }).first().click();
 await see(page.getByText("Task created: Follow up with Taylor"), "task event on contact timeline");
 
+// TXN-001: create a transaction, close it, verify actual GCI math
+await page.getByRole("link", { name: "Transactions" }).click();
+await page.getByLabel("Property address").fill("12 Elm St, Springfield");
+await page.getByLabel("Side").selectOption("seller");
+await page.getByLabel("Price ($)").fill("500000");
+await page.getByLabel("GCI ($)").fill("12500");
+await page.getByRole("button", { name: "Add" }).click();
+await see(page.getByText("12 Elm St, Springfield"), "transaction created and listed");
+await page.getByLabel(/Status for 12 Elm St/).selectOption("closed");
+await see(page.getByText(/sum of GCI across 1 closed transaction/), "closed GCI formula reflects the closed deal");
+
 await page.getByRole("link", { name: "Settings" }).click();
 await see(page.getByText("Automation activity"), "automation activity panel renders");
 await see(page.getByText("new_lead_followup").first(), "workflow run listed with status");

@@ -200,6 +200,30 @@ describe("DemoApi vertical slice: capture → contact → timeline → assignmen
     expect(runs[0].status).toBe("succeeded");
   });
 
+  it("TXN-001: creates transactions, tracks status, links to the contact timeline", async () => {
+    const api = new DemoApi();
+    const [c] = await api.listContacts();
+    const id = await api.createTransaction({
+      contactId: c.id,
+      side: "seller",
+      propertyAddress: "12 Elm St",
+      price: 500_000,
+      gci: 12_500,
+    });
+    let txns = await api.listTransactions();
+    expect(txns.find((t) => t.id === id)?.status).toBe("pending");
+    await api.updateTransactionStatus(id, "closed");
+    txns = await api.listTransactions();
+    expect(txns.find((t) => t.id === id)?.status).toBe("closed");
+    const { activities } = (await api.getContact(c.id))!;
+    expect(activities.some((a) => a.title.startsWith("Transaction created"))).toBe(true);
+    expect(activities.some((a) => a.title.includes("pending → closed"))).toBe(true);
+    await expect(api.createTransaction({ side: "buyer", propertyAddress: "  " })).rejects.toThrow(/address/);
+    await expect(
+      api.createTransaction({ side: "buyer", propertyAddress: "1 A St", gci: -5 }),
+    ).rejects.toThrow(/negative/);
+  });
+
   it("rejects empty notes and unknown contacts", async () => {
     const api = new DemoApi();
     const [c] = await api.listContacts();

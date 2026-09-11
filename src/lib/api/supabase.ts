@@ -10,11 +10,14 @@ import type {
   OrgSettings,
   TaskItem,
   TaskStatus,
+  Transaction,
+  TxnStatus,
 } from "@/types";
 import type {
   AutomationRunSummary,
   CaptureLeadRequest,
   CreateTaskRequest,
+  CreateTransactionRequest,
   CrmApi,
   UpdateContactRequest,
 } from "./types";
@@ -273,6 +276,55 @@ export class SupabaseApi implements CrmApi {
       actionCount: r.action_count as number,
       startedAt: r.started_at as string,
     }));
+  }
+
+  async listTransactions(): Promise<Transaction[]> {
+    const orgId = await this.requireOrgId();
+    const { data, error } = await this.client
+      .from("transactions")
+      .select("*")
+      .eq("org_id", orgId)
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as Transaction[];
+  }
+
+  async createTransaction(req: CreateTransactionRequest): Promise<string> {
+    if (req.propertyAddress.trim() === "") throw new Error("property address is required");
+    const orgId = await this.requireOrgId();
+    const userId = await this.requireUserId();
+    const { data, error } = await this.client
+      .from("transactions")
+      .insert({
+        org_id: orgId,
+        contact_id: req.contactId ?? null,
+        agent_user_id: userId,
+        side: req.side,
+        property_address: req.propertyAddress.trim(),
+        price: req.price ?? null,
+        gci: req.gci ?? null,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    if (req.contactId) {
+      await this.client.from("activities").insert({
+        org_id: orgId,
+        contact_id: req.contactId,
+        actor_type: "human",
+        actor_user_id: userId,
+        activity_type: "system",
+        title: `Transaction created: ${req.propertyAddress.trim()}`,
+        metadata: { transaction_id: data.id },
+      });
+    }
+    return data.id as string;
+  }
+
+  async updateTransactionStatus(id: string, status: TxnStatus): Promise<void> {
+    const { error } = await this.client.from("transactions").update({ status }).eq("id", id);
+    if (error) throw new Error(error.message);
   }
 
   async listTasks(): Promise<TaskItem[]> {

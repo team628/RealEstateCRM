@@ -76,6 +76,22 @@ export interface Activity {
   occurred_at: string;
 }
 
+export type TxnStatus = "pending" | "active" | "under_contract" | "closed" | "cancelled";
+
+export interface Transaction {
+  id: string;
+  org_id: string;
+  contact_id: string | null;
+  agent_user_id: string | null;
+  side: "buyer" | "seller";
+  status: TxnStatus;
+  property_address: string | null;
+  price: number | null;
+  gci: number | null;
+  key_dates: Record<string, string>;
+  created_at: string;
+}
+
 export type TaskStatus = "open" | "completed" | "cancelled";
 
 export interface TaskItem {

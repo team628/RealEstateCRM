@@ -10,6 +10,8 @@ import type {
   OrgSettings,
   TaskItem,
   TaskStatus,
+  Transaction,
+  TxnStatus,
 } from "@/types";
 import {
   applyAttribution,
@@ -31,6 +33,7 @@ import type {
   AutomationRunSummary,
   CaptureLeadRequest,
   CreateTaskRequest,
+  CreateTransactionRequest,
   CrmApi,
   UpdateContactRequest,
 } from "./types";
@@ -71,6 +74,7 @@ export class DemoApi implements CrmApi {
   private contacts = new Map<string, Contact>();
   private activities: Activity[] = [];
   private tasks = new Map<string, TaskItem>();
+  private transactions = new Map<string, Transaction>();
   readonly automationRuns: RunRecord[] = [];
   private insights: AiInsight[] = [];
   private aiProvider = new FakeAiProvider();
@@ -380,6 +384,50 @@ export class DemoApi implements CrmApi {
         actionCount: r.actionCount,
         startedAt: r.startedAt,
       }));
+  }
+
+  async listTransactions(): Promise<Transaction[]> {
+    return [...this.transactions.values()].sort((a, b) => b.created_at.localeCompare(a.created_at));
+  }
+
+  async createTransaction(req: CreateTransactionRequest): Promise<string> {
+    if (req.propertyAddress.trim() === "") throw new Error("property address is required");
+    if (req.price != null && req.price < 0) throw new Error("price cannot be negative");
+    if (req.gci != null && req.gci < 0) throw new Error("GCI cannot be negative");
+    const contact = req.contactId ? this.contacts.get(req.contactId) : null;
+    if (req.contactId && !contact) throw new Error("contact not found");
+    const id = `x-${this.transactions.size + 1}`;
+    this.transactions.set(id, {
+      id,
+      org_id: ORG_ID,
+      contact_id: req.contactId ?? null,
+      agent_user_id: contact?.assigned_to ?? "u-broker",
+      side: req.side,
+      status: "pending",
+      property_address: req.propertyAddress.trim(),
+      price: req.price ?? null,
+      gci: req.gci ?? null,
+      key_dates: {},
+      created_at: nowIso(),
+    });
+    if (req.contactId) {
+      this.pushActivity(req.contactId, "human", "system",
+        `Transaction created: ${req.propertyAddress.trim()}`, null, { transaction_id: id }, "u-broker");
+    }
+    return id;
+  }
+
+  async updateTransactionStatus(id: string, status: TxnStatus): Promise<void> {
+    const txn = this.transactions.get(id);
+    if (!txn) throw new Error("transaction not found");
+    if (txn.status === status) return;
+    const from = txn.status;
+    txn.status = status;
+    if (txn.contact_id) {
+      this.pushActivity(txn.contact_id, "human", "system",
+        `Transaction ${from} → ${status}: ${txn.property_address ?? ""}`, null,
+        { transaction_id: id, from, to: status }, "u-broker");
+    }
   }
 
   async listTasks(): Promise<TaskItem[]> {

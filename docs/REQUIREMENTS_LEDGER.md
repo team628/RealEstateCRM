@@ -102,7 +102,13 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
 - **Phase:** P4 · **External:** MLS agreement · **Impl:** NOT STARTED
 
 ## TXN-001 — Transaction pipeline
-- **Phase:** P4 · **Impl:** NOT STARTED (schema stub landed: transactions table)
+- **Phase:** P4
+- **Impl:** first slice VERIFIED (demo mode): create transaction (side, price,
+  GCI, contact link), status progression with timeline events, pipeline view,
+  §30-compliant Closed GCI metric (formula displayed, labeled ACTUAL). Unit +
+  e2e tested; RLS on the table covered by the isolation approach (standard
+  member policies). PENDING: key-date milestones, commission splits, closing
+  checklist, J06 automation hooks.
 
 ## RPT-001 — Reporting / money metrics
 - **Phase:** P5 · **Impl:** NOT STARTED

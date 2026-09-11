@@ -28,6 +28,14 @@ export interface AutomationRunSummary {
   startedAt: string;
 }
 
+export interface CreateTransactionRequest {
+  contactId?: string | null;
+  side: "buyer" | "seller";
+  propertyAddress: string;
+  price?: number | null;
+  gci?: number | null;
+}
+
 export interface CreateTaskRequest {
   title: string;
   body?: string;
@@ -66,6 +74,9 @@ export interface CrmApi {
   classifyContact(contactId: string): Promise<import("@/lib/ai/types").AiInsight>;
   listInsights(contactId: string): Promise<import("@/lib/ai/types").AiInsight[]>;
   listAutomationRuns(limit?: number): Promise<AutomationRunSummary[]>;
+  listTransactions(): Promise<import("@/types").Transaction[]>;
+  createTransaction(req: CreateTransactionRequest): Promise<string>;
+  updateTransactionStatus(id: string, status: import("@/types").TxnStatus): Promise<void>;
   listTasks(): Promise<TaskItem[]>;
   createTask(req: CreateTaskRequest): Promise<string>;
   setTaskStatus(taskId: string, status: TaskStatus): Promise<void>;

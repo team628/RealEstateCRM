@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, LayoutDashboard, ListTodo, Settings, UserPlus, Users } from "lucide-react";
+import { Building2, Handshake, LayoutDashboard, ListTodo, Settings, UserPlus, Users } from "lucide-react";
 import { getApi } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +9,7 @@ const navItems = [
   { to: "/contacts", label: "Contacts", icon: Users, end: false },
   { to: "/leads/new", label: "New Lead", icon: UserPlus, end: false },
   { to: "/tasks", label: "Tasks", icon: ListTodo, end: false },
+  { to: "/transactions", label: "Transactions", icon: Handshake, end: false },
   { to: "/settings", label: "Settings", icon: Settings, end: false },
 ];
 
