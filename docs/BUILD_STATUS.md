@@ -8,10 +8,10 @@ P1 Foundation → P2 CRM Core (in progress)
 
 ## LAST VERIFIED MILESTONE
 CHECKPOINT 04 (2026-09-11): CRM core + automation engine + AI classification
-pipeline + consent-enforced comms outbox + org data export. Verification
-executed: typecheck ✓, 55 unit tests ✓, production build ✓, db:test (isolation +
-comms/export suites, 5 migrations from zero) ✓, browser e2e smoke (26 checks,
-zero console errors) ✓.
+pipeline + consent-enforced comms outbox + org data export + transactions slice
++ §14 provenance guard. Verification executed: typecheck ✓, 56 unit tests ✓,
+production build ✓, db:test (isolation + comms/export suites, 6 migrations from
+zero) ✓, browser e2e smoke (28 checks, zero console errors) ✓.
 
 ## ACTIVE WORKSTREAM
 Foundation bootstrap: schema+RLS, isolation test harness, lead-capture vertical slice.

@@ -141,5 +141,22 @@ select tests.assert(
   jsonb_array_length((:'export')::jsonb -> 'audit_log') > 0,
   'export contains the audit trail');
 
+-- ---------------------------------------------------------------------------
+-- §14 provenance guard: clients cannot forge 'fact' provenance
+-- ---------------------------------------------------------------------------
+select tests.login(:'uc');
+select tests.assert_denied(
+  format('insert into public.ai_insights (org_id, contact_id, kind, value, source)
+          values (%L, %L, %L, %L::jsonb, %L)',
+         :'orga_id', :'contact_a', 'seller_probability', '{"p": 1}', 'fact'),
+  'members cannot label an insight as verified fact');
+
+insert into public.ai_insights (org_id, contact_id, kind, value, source, confidence, model)
+values (:'orga_id', :'contact_a', 'seller_probability', '{"p": 0.4}'::jsonb,
+        'ai_inferred', 0.4, 'test-model');
+select tests.assert(
+  (select count(*) from public.ai_insights where contact_id = :'contact_a') = 1,
+  'honestly-labeled insights insert normally');
+
 reset role;
 select 'COMMS + EXPORT SUITE PASSED' as result;
