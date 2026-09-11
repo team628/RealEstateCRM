@@ -9,6 +9,25 @@ import type {
   TaskStatus,
 } from "@/types";
 
+export interface UpdateContactRequest {
+  contact_type?: import("@/types").ContactType;
+  email_consent?: import("@/types").ConsentState;
+  sms_consent?: import("@/types").ConsentState;
+  call_consent?: import("@/types").ConsentState;
+  assigned_to?: string | null;
+  first_name?: string;
+  last_name?: string;
+}
+
+export interface AutomationRunSummary {
+  workflowKey: string;
+  triggerEvent: string;
+  status: "succeeded" | "failed" | "aborted";
+  reason: string | null;
+  actionCount: number;
+  startedAt: string;
+}
+
 export interface CreateTaskRequest {
   title: string;
   body?: string;
@@ -42,6 +61,8 @@ export interface CrmApi {
   captureLead(req: CaptureLeadRequest): Promise<string>;
   addNote(contactId: string, body: string): Promise<void>;
   updateStage(contactId: string, stage: ContactStage): Promise<void>;
+  updateContact(contactId: string, patch: UpdateContactRequest): Promise<void>;
+  listAutomationRuns(limit?: number): Promise<AutomationRunSummary[]>;
   listTasks(): Promise<TaskItem[]>;
   createTask(req: CreateTaskRequest): Promise<string>;
   setTaskStatus(taskId: string, status: TaskStatus): Promise<void>;

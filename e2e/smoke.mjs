@@ -43,6 +43,12 @@ await see(page.getByText("Met at the open house"), "note appears on timeline");
 await page.getByLabel("Stage").selectOption("engaged");
 await see(page.getByText("Stage: new → engaged"), "stage change recorded on timeline");
 
+// Contact editing: type, consent, reassignment
+await page.getByLabel("Contact type").selectOption("buyer");
+await page.getByLabel("SMS consent").selectOption("granted");
+await page.getByLabel("Assignee").selectOption({ index: 2 });
+await see(page.getByText("Reassigned"), "reassignment recorded on timeline");
+
 // AUTO-001: capturing Taylor should have auto-created a follow-up task
 await page.getByRole("link", { name: "Tasks" }).click();
 await see(page.getByText("Follow up with new lead").first(), "automation created a follow-up task");
@@ -58,6 +64,9 @@ await page.getByRole("link", { name: /Taylor Tester/ }).first().click();
 await see(page.getByText("Task created: Follow up with Taylor"), "task event on contact timeline");
 
 await page.getByRole("link", { name: "Settings" }).click();
+await see(page.getByText("Automation activity"), "automation activity panel renders");
+await see(page.getByText("new_lead_followup").first(), "workflow run listed with status");
+
 const sms = page.getByRole("switch", { name: /Outbound SMS/ });
 await sms.waitFor();
 assert((await sms.getAttribute("aria-checked")) === "true", "SMS switch starts enabled");

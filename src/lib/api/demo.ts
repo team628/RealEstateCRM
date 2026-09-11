@@ -25,7 +25,13 @@ import {
   type RunRecord,
   type WorkflowDef,
 } from "@/lib/domain/workflow";
-import type { CaptureLeadRequest, CreateTaskRequest, CrmApi } from "./types";
+import type {
+  AutomationRunSummary,
+  CaptureLeadRequest,
+  CreateTaskRequest,
+  CrmApi,
+  UpdateContactRequest,
+} from "./types";
 
 // Built-in demo workflows (AUTO-001). In production these live in org config.
 const DEMO_WORKFLOWS: WorkflowDef[] = [
@@ -298,6 +304,33 @@ export class DemoApi implements CrmApi {
     if (from === stage) return;
     contact.stage = stage;
     this.pushActivity(contactId, "human", "stage_change", `Stage: ${from} → ${stage}`, null, { from, to: stage }, "u-broker");
+  }
+
+  async updateContact(contactId: string, patch: UpdateContactRequest): Promise<void> {
+    const contact = this.contacts.get(contactId);
+    if (!contact) throw new Error("contact not found");
+    const previousAssignee = contact.assigned_to;
+    Object.assign(contact, patch);
+    if ("assigned_to" in patch && patch.assigned_to !== previousAssignee) {
+      this.pushActivity(contactId, "human", "assignment", "Reassigned", null, {
+        from: previousAssignee,
+        to: patch.assigned_to ?? null,
+      }, "u-broker");
+    }
+  }
+
+  async listAutomationRuns(limit = 20): Promise<AutomationRunSummary[]> {
+    return [...this.automationRuns]
+      .reverse()
+      .slice(0, limit)
+      .map((r) => ({
+        workflowKey: r.workflowKey,
+        triggerEvent: r.triggerEvent,
+        status: r.status,
+        reason: r.reason,
+        actionCount: r.actionCount,
+        startedAt: r.startedAt,
+      }));
   }
 
   async listTasks(): Promise<TaskItem[]> {

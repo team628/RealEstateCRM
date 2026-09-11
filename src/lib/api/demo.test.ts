@@ -169,6 +169,37 @@ describe("DemoApi vertical slice: capture → contact → timeline → assignmen
     expect(api.automationRuns.length).toBe(runsAfterFirst);
   });
 
+  it("updateContact edits type/consent and logs reassignment", async () => {
+    const api = new DemoApi();
+    const [c] = await api.listContacts();
+    await api.updateContact(c.id, { contact_type: "buyer", sms_consent: "granted" });
+    let detail = (await api.getContact(c.id))!;
+    expect(detail.contact.contact_type).toBe("buyer");
+    expect(detail.contact.sms_consent).toBe("granted");
+    const newAssignee = detail.contact.assigned_to === "u-agent1" ? "u-agent2" : "u-agent1";
+    await api.updateContact(c.id, { assigned_to: newAssignee });
+    detail = (await api.getContact(c.id))!;
+    expect(detail.contact.assigned_to).toBe(newAssignee);
+    expect(detail.activities.some((a) => a.title === "Reassigned")).toBe(true);
+    await expect(api.updateContact("nope", { contact_type: "buyer" })).rejects.toThrow(/not found/);
+  });
+
+  it("exposes automation runs for the health view", async () => {
+    const api = new DemoApi();
+    await api.captureLead({
+      idempotencyKey: "test-key-runs-00001",
+      firstName: "Run",
+      lastName: "Log",
+      email: "runlog@example.com",
+      phone: "",
+      source: "website",
+    });
+    const runs = await api.listAutomationRuns();
+    expect(runs.length).toBeGreaterThan(0);
+    expect(runs[0].workflowKey).toBe("new_lead_followup");
+    expect(runs[0].status).toBe("succeeded");
+  });
+
   it("rejects empty notes and unknown contacts", async () => {
     const api = new DemoApi();
     const [c] = await api.listContacts();

@@ -11,7 +11,13 @@ import type {
   TaskItem,
   TaskStatus,
 } from "@/types";
-import type { CaptureLeadRequest, CreateTaskRequest, CrmApi } from "./types";
+import type {
+  AutomationRunSummary,
+  CaptureLeadRequest,
+  CreateTaskRequest,
+  CrmApi,
+  UpdateContactRequest,
+} from "./types";
 
 export function getSupabaseEnv(): { url: string; anonKey: string } | null {
   const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -203,6 +209,51 @@ export class SupabaseApi implements CrmApi {
       metadata: { from: existing.stage, to: stage },
     });
     if (actErr) throw new Error(actErr.message);
+  }
+
+  async updateContact(contactId: string, patch: UpdateContactRequest): Promise<void> {
+    const orgId = await this.requireOrgId();
+    const userId = await this.requireUserId();
+    const { data: before, error: readErr } = await this.client
+      .from("contacts")
+      .select("assigned_to")
+      .eq("id", contactId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!before) throw new Error("contact not found");
+    const { error } = await this.client.from("contacts").update(patch).eq("id", contactId);
+    if (error) throw new Error(error.message);
+    if ("assigned_to" in patch && patch.assigned_to !== before.assigned_to) {
+      const { error: actErr } = await this.client.from("activities").insert({
+        org_id: orgId,
+        contact_id: contactId,
+        actor_type: "human",
+        actor_user_id: userId,
+        activity_type: "assignment",
+        title: "Reassigned",
+        metadata: { from: before.assigned_to, to: patch.assigned_to ?? null },
+      });
+      if (actErr) throw new Error(actErr.message);
+    }
+  }
+
+  async listAutomationRuns(limit = 20): Promise<AutomationRunSummary[]> {
+    const orgId = await this.requireOrgId();
+    const { data, error } = await this.client
+      .from("automation_runs")
+      .select("workflow_key, trigger_event, status, error, action_count, started_at")
+      .eq("org_id", orgId)
+      .order("started_at", { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r) => ({
+      workflowKey: r.workflow_key as string,
+      triggerEvent: r.trigger_event as string,
+      status: (r.status === "running" ? "succeeded" : r.status) as AutomationRunSummary["status"],
+      reason: (r.error as string | null) ?? null,
+      actionCount: r.action_count as number,
+      startedAt: r.started_at as string,
+    }));
   }
 
   async listTasks(): Promise<TaskItem[]> {

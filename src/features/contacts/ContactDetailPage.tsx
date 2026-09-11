@@ -7,7 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Label, Select, Textarea } from "@/components/ui/input";
 import { getApi } from "@/lib/api";
 import { STAGE_LABELS, STAGES } from "./stages";
-import type { Activity, ContactStage } from "@/types";
+import type { Activity, ConsentState, ContactStage, ContactType } from "@/types";
+import type { UpdateContactRequest } from "@/lib/api/types";
+
+const CONTACT_TYPE_LABELS: Record<ContactType, string> = {
+  unknown: "Unknown",
+  buyer: "Buyer",
+  seller: "Seller",
+  buyer_seller: "Buyer + seller",
+  renter: "Renter",
+  agent_recruit: "Agent recruit",
+  vendor: "Vendor",
+  other: "Other",
+};
+
+const CONSENT_LABELS: Record<ConsentState, string> = {
+  unknown: "Unknown",
+  granted: "Granted",
+  revoked: "Revoked",
+};
+
+const CONSENT_FIELDS = [
+  ["email_consent", "Email consent"],
+  ["sms_consent", "SMS consent"],
+  ["call_consent", "Call consent"],
+] as const;
 
 function ActivityRow({ activity }: { activity: Activity }) {
   const when = formatDistanceToNow(new Date(activity.occurred_at), { addSuffix: true });
@@ -48,6 +72,10 @@ export default function ContactDetailPage() {
 
   const stageMutation = useMutation({
     mutationFn: (stage: ContactStage) => api.updateStage(id, stage),
+    onSuccess: invalidate,
+  });
+  const patchMutation = useMutation({
+    mutationFn: (patch: UpdateContactRequest) => api.updateContact(id, patch),
     onSuccess: invalidate,
   });
   const noteMutation = useMutation({
@@ -145,6 +173,72 @@ export default function ContactDetailPage() {
                 </p>
               )}
             </div>
+            <div>
+              <Label htmlFor="type-select">Contact type</Label>
+              <Select
+                id="type-select"
+                value={contact.contact_type}
+                disabled={patchMutation.isPending}
+                onChange={(e) => patchMutation.mutate({ contact_type: e.target.value as ContactType })}
+              >
+                {(Object.keys(CONTACT_TYPE_LABELS) as ContactType[]).map((t) => (
+                  <option key={t} value={t}>
+                    {CONTACT_TYPE_LABELS[t]}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="assignee-select">Assignee</Label>
+              <Select
+                id="assignee-select"
+                value={contact.assigned_to ?? ""}
+                disabled={patchMutation.isPending}
+                onChange={(e) => patchMutation.mutate({ assigned_to: e.target.value || null })}
+              >
+                <option value="">Unassigned</option>
+                {members?.map((m) => (
+                  <option key={m.user_id} value={m.user_id}>
+                    {m.full_name} ({m.role})
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <fieldset>
+              <legend className="mb-1 text-sm font-medium">Communication consent</legend>
+              <div className="space-y-2">
+                {CONSENT_FIELDS.map(([field, label]) => (
+                  <div key={field} className="flex items-center justify-between gap-2">
+                    <Label htmlFor={`consent-${field}`} className="mb-0 font-normal text-muted-foreground">
+                      {label}
+                    </Label>
+                    <Select
+                      id={`consent-${field}`}
+                      className="h-8 w-32"
+                      value={contact[field]}
+                      disabled={patchMutation.isPending}
+                      onChange={(e) =>
+                        patchMutation.mutate({ [field]: e.target.value as ConsentState })
+                      }
+                    >
+                      {(Object.keys(CONSENT_LABELS) as ConsentState[]).map((s) => (
+                        <option key={s} value={s}>
+                          {CONSENT_LABELS[s]}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Outbound sends are blocked unless consent is granted.
+              </p>
+            </fieldset>
+            {patchMutation.error instanceof Error && (
+              <p role="alert" className="text-xs text-destructive">
+                {patchMutation.error.message}
+              </p>
+            )}
           </CardContent>
         </Card>
 

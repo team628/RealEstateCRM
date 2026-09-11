@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatDistanceToNow } from "date-fns";
+import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getApi } from "@/lib/api";
 import type { OrgSettings } from "@/types";
 
@@ -25,6 +26,20 @@ export default function SettingsPage() {
     mutationFn: (patch: Partial<OrgSettings>) => api.updateSettings(patch),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["orgSettings"] }),
   });
+  const { data: runs } = useQuery({
+    queryKey: ["automationRuns"],
+    queryFn: () => api.listAutomationRuns(20),
+    refetchInterval: 30_000,
+  });
+
+  // §23 feature health, derived from actual run outcomes
+  const automationHealth = !settings
+    ? null
+    : !settings.automations_enabled
+      ? { label: "DISABLED", tone: "destructive" as const }
+      : runs?.some((r) => r.status === "failed")
+        ? { label: "DEGRADED", tone: "destructive" as const }
+        : { label: "HEALTHY", tone: "primary" as const };
 
   return (
     <div className="space-y-4">
@@ -80,6 +95,45 @@ export default function SettingsPage() {
             <p role="alert" className="mt-2 text-sm text-destructive">
               {mutation.error.message}
             </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <CardTitle>Automation activity</CardTitle>
+            {automationHealth && <Badge tone={automationHealth.tone}>{automationHealth.label}</Badge>}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Recent workflow runs, including runs blocked by guardrails or kill switches.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {!runs || runs.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No automation runs yet.</p>
+          ) : (
+            <ul className="divide-y divide-border">
+              {runs.map((r, i) => (
+                <li key={i} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                  <div>
+                    <span className="font-medium">{r.workflowKey}</span>
+                    <span className="text-muted-foreground"> · {r.triggerEvent}</span>
+                    {r.reason && <p className="text-xs text-muted-foreground">{r.reason}</p>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      tone={r.status === "succeeded" ? "primary" : r.status === "failed" ? "destructive" : "muted"}
+                    >
+                      {r.status}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(r.startedAt), { addSuffix: true })}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </CardContent>
       </Card>
