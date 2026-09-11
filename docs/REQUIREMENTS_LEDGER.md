@@ -25,28 +25,36 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
 
 ## CRM-001 — Unified contact record
 - **Phase:** P2 · **Deps:** SEC-001
-- **Impl:** IMPLEMENTED — NOT YET VERIFIED (schema + UI list/detail; merge/dedupe pending)
-- **Tests:** domain unit tests (validation/normalization) passing; e2e pending
-- **Files:** `supabase/migrations/`, `src/features/contacts/`, `src/lib/domain/contact.ts`
+- **Impl:** VERIFIED (schema + demo mode): schema verified by db:test; UI
+  list/detail verified by browser e2e; dedupe rules verified in SQL suite + unit
+  tests. Supabase-backed UI path IMPLEMENTED — NOT YET VERIFIED (needs OA-002 +
+  auth UI, KI-003). Merge tooling pending.
+- **Tests:** db/tests suite ✓, unit tests ✓, e2e/smoke.mjs ✓
+- **Files:** `supabase/migrations/`, `src/features/contacts/`, `src/lib/domain/lead.ts`
 - **Acceptance:** one contact row unifies identity, attribution, consent flags, stage;
   timeline attached; dedupe on email/phone within org.
 
 ## CRM-002 — Activity timeline
 - **Phase:** P2 · **Deps:** CRM-001
-- **Impl:** IMPLEMENTED — NOT YET VERIFIED (append-only activities table + UI)
+- **Impl:** VERIFIED (schema + demo mode): append-only enforcement + actor
+  attribution verified in db:test; timeline UI (capture/assignment/note/
+  stage-change) verified by e2e. Same Supabase-UI caveat as CRM-001.
 - **Acceptance:** immutable, ordered, typed activity stream per contact incl. system,
   human, and AI-attributed entries.
 
 ## LEAD-001 — Lead capture + attribution integrity
 - **Phase:** P2 · **Deps:** CRM-001
-- **Impl:** IMPLEMENTED — NOT YET VERIFIED (capture RPC w/ idempotency + attribution rules)
-- **Tests:** attribution unit tests (original source never overwritten) passing
+- **Impl:** VERIFIED (SQL + demo mode): idempotent replay, email/phone dedupe,
+  immutable original attribution, audit logging — all asserted in db:test; same
+  rules unit-tested in TS; form flow verified by e2e. Public-website capture path
+  pending (KI-004).
 - **Acceptance:** §29 — original source/UTM preserved forever; latest source updated;
   idempotent capture (no dup contacts from double-submit).
 
 ## LEAD-002 — Lead routing/assignment
-- **Phase:** P2 · **Deps:** LEAD-001 · **Impl:** IMPLEMENTED — NOT YET VERIFIED
-  (round-robin assignment inside capture RPC; audit-logged)
+- **Phase:** P2 · **Deps:** LEAD-001
+- **Impl:** VERIFIED (SQL + demo mode): round-robin distribution asserted in
+  db:test and unit tests; assignment activity on timeline verified by e2e.
 
 ## AI-001 — AI provider abstraction
 - **Phase:** P3 · **Deps:** SEC-001 · **External:** provider API keys

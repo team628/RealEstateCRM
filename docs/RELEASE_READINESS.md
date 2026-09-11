@@ -8,7 +8,7 @@ RED = not production-viable · YELLOW = partial/needs work · GREEN = production
 | Database | YELLOW | Core schema + RLS landed, applies cleanly from zero |
 | Security | YELLOW | Tenant isolation verified at schema layer; app-level pen pass pending |
 | Tenant Isolation | GREEN (schema layer) | Executed RLS test suite passing |
-| CRM | YELLOW | Contacts/leads/timeline vertical slice; merge/dedupe UI pending |
+| CRM | YELLOW | Vertical slice verified (demo mode + e2e); auth/live-backend UI pending (KI-003) |
 | AI | RED | Not started (needs AI-001; key = OA-003) |
 | Automations | RED | Guardrail schema only; engine not built |
 | Communications | RED | Not started (providers = OA-004) |
@@ -20,7 +20,7 @@ RED = not production-viable · YELLOW = partial/needs work · GREEN = production
 | Performance | YELLOW | Indexed FKs; no load testing yet |
 | Accessibility | YELLOW | Semantic forms/labels baseline; full WCAG pass pending |
 | Observability | RED | Feature-health surface not built |
-| Testing | YELLOW | DB isolation suite + domain unit tests executing; e2e pending |
+| Testing | YELLOW | DB isolation suite + 32 unit tests + browser e2e smoke all executing and passing |
 | Documentation | GREEN | Governance docs current |
 
 **NOT PRODUCTION READY.** Critical areas remain RED — this is expected at
