@@ -107,7 +107,13 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
   `src/lib/comms/`, `docs/contracts/email-sms.md`
 
 ## MLS-001 — MLS provider interface
-- **Phase:** P4 · **External:** MLS agreement · **Impl:** NOT STARTED
+- **Phase:** P4 · **External:** MLS agreement (OA-005)
+- **Impl:** interface layer VERIFIED at unit level: provider contract +
+  canonical `PropertyListing` model, deterministic fake provider covering the
+  full adapter surface, buyer-criteria matching with per-rejection reasons
+  (J02/J08 groundwork) — `src/lib/mls/`, 6 executed tests; §12 contract at
+  `docs/contracts/mls.md`. Live vendor adapter, Postgres listing sync, and
+  search/alert UI blocked on OA-005.
 
 ## TXN-001 — Transaction pipeline
 - **Phase:** P4

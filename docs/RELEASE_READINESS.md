@@ -13,7 +13,7 @@ RED = not production-viable · YELLOW = partial/needs work · GREEN = production
 | Automations | YELLOW | Engine core verified (guardrails, kill switches, loop protection); needs server-side host + config UI |
 | Communications | YELLOW | Consent+kill-switch-enforced outbox verified at DB layer; no send adapters yet (OA-004); voice not started |
 | Website | YELLOW | Public capture endpoint verified (token + rate cap); no public site/pages yet |
-| MLS | RED | Not started (OA-005) |
+| MLS | YELLOW | Adapter contract + matching logic unit-verified; live vendor + sync blocked on OA-005 |
 | Transactions | YELLOW | Create/status/GCI slice verified in demo; milestones + splits pending |
 | Reporting | RED | Not started |
 | Mobile | YELLOW | Responsive layout baseline |
