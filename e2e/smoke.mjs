@@ -88,6 +88,18 @@ await see(page.getByText("12 Elm St, Springfield"), "transaction created and lis
 await page.getByLabel(/Status for 12 Elm St/).selectOption("closed");
 await see(page.getByText(/sum of GCI across 1 closed transaction/), "closed GCI formula reflects the closed deal");
 
+// MLS-001: property search over the demo provider
+await page.getByRole("link", { name: "Properties" }).click();
+await see(page.getByText("Sample inventory", { exact: false }), "sample-data disclosure shown");
+await see(page.getByText("12 Elm St", { exact: true }), "active listings render");
+await page.getByLabel("City").fill("Springfield");
+await page.getByLabel("Max price ($)").fill("460000");
+await page.getByLabel("Min bedrooms").selectOption("3");
+await page.getByRole("button", { name: "Search", exact: true }).click();
+await see(page.getByText("7 Mill Ct"), "filtered search returns matches");
+await page.waitForFunction(() => !document.body.textContent.includes("301 Lake Rd"), { timeout: 5000 });
+console.log("ok - out-of-criteria listings filtered out");
+
 await page.getByRole("link", { name: "Settings" }).click();
 await see(page.getByText("Automation activity"), "automation activity panel renders");
 await see(page.getByText("new_lead_followup").first(), "workflow run listed with status");

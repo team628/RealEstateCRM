@@ -112,8 +112,9 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
   canonical `PropertyListing` model, deterministic fake provider covering the
   full adapter surface, buyer-criteria matching with per-rejection reasons
   (J02/J08 groundwork) — `src/lib/mls/`, 6 executed tests; §12 contract at
-  `docs/contracts/mls.md`. Live vendor adapter, Postgres listing sync, and
-  search/alert UI blocked on OA-005.
+  `docs/contracts/mls.md`. Property search UI live over the interface (demo
+  provider, sample-data disclosure shown; filters verified by e2e). Live vendor
+  adapter, Postgres listing sync, and alerts blocked on OA-005.
 
 ## TXN-001 — Transaction pipeline
 - **Phase:** P4

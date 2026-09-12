@@ -8,6 +8,7 @@ import ContactDetailPage from "@/features/contacts/ContactDetailPage";
 import NewLeadPage from "@/features/leads/NewLeadPage";
 import TasksPage from "@/features/tasks/TasksPage";
 import TransactionsPage from "@/features/transactions/TransactionsPage";
+import PropertiesPage from "@/features/properties/PropertiesPage";
 import SettingsPage from "@/features/settings/SettingsPage";
 
 const queryClient = new QueryClient({
@@ -27,6 +28,7 @@ export default function App() {
             <Route path="leads/new" element={<NewLeadPage />} />
             <Route path="tasks" element={<TasksPage />} />
             <Route path="transactions" element={<TransactionsPage />} />
+            <Route path="properties" element={<PropertiesPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>
