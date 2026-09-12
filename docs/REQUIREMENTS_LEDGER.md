@@ -49,8 +49,9 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
 - **Phase:** P2 · **Deps:** CRM-001
 - **Impl:** VERIFIED (SQL + demo mode): idempotent replay, email/phone dedupe,
   immutable original attribution, audit logging — all asserted in db:test; same
-  rules unit-tested in TS; form flow verified by e2e. Public-website capture path
-  pending (KI-004).
+  rules unit-tested in TS; form flow verified by e2e. Public-website capture
+  VERIFIED at schema layer (KI-004 resolved): anon `capture_lead_public` with
+  per-org form token, hourly rate cap, size caps — `db/tests/04_*`.
 - **Acceptance:** §29 — original source/UTM preserved forever; latest source updated;
   idempotent capture (no dup contacts from double-submit).
 

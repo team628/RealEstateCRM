@@ -12,7 +12,7 @@ RED = not production-viable · YELLOW = partial/needs work · GREEN = production
 | AI | YELLOW | Classification pipeline + injection/PII/kill-switch defenses verified in demo; live provider path unverified (OA-002/OA-003); real-model evals pending |
 | Automations | YELLOW | Engine core verified (guardrails, kill switches, loop protection); needs server-side host + config UI |
 | Communications | YELLOW | Consent+kill-switch-enforced outbox verified at DB layer; no send adapters yet (OA-004); voice not started |
-| Website | RED | In-app capture only |
+| Website | YELLOW | Public capture endpoint verified (token + rate cap); no public site/pages yet |
 | MLS | RED | Not started (OA-005) |
 | Transactions | YELLOW | Create/status/GCI slice verified in demo; milestones + splits pending |
 | Reporting | RED | Not started |
