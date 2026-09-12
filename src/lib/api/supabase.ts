@@ -240,6 +240,14 @@ export class SupabaseApi implements CrmApi {
     }
   }
 
+  async mergeContacts(survivorId: string, duplicateId: string): Promise<void> {
+    const { error } = await this.client.rpc("merge_contacts", {
+      p_survivor_id: survivorId,
+      p_duplicate_id: duplicateId,
+    });
+    if (error) throw new Error(error.message);
+  }
+
   async classifyContact(contactId: string): Promise<import("@/lib/ai/types").AiInsight> {
     const { data, error } = await this.client.functions.invoke("ai-classify-lead", {
       body: { contact_id: contactId },

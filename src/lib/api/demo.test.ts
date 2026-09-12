@@ -224,6 +224,39 @@ describe("DemoApi vertical slice: capture → contact → timeline → assignmen
     ).rejects.toThrow(/negative/);
   });
 
+  it("mergeContacts folds a duplicate into the survivor preserving attribution", async () => {
+    const api = new DemoApi();
+    const survivorId = await api.captureLead({
+      idempotencyKey: "merge-demo-000001",
+      firstName: "Morgan",
+      lastName: "Mixed",
+      email: "morgan@example.com",
+      phone: "",
+      source: "website",
+    });
+    const duplicateId = await api.captureLead({
+      idempotencyKey: "merge-demo-000002",
+      firstName: "",
+      lastName: "Mixed",
+      email: "",
+      phone: "555-303-4444",
+      source: "sign_call",
+    });
+    await api.addNote(duplicateId, "Called from the yard sign");
+    const before = (await api.listContacts()).length;
+    await api.mergeContacts(survivorId, duplicateId);
+    expect((await api.listContacts()).length).toBe(before - 1);
+    expect(await api.getContact(duplicateId)).toBeNull();
+    const { contact, activities } = (await api.getContact(survivorId))!;
+    expect(contact.phone).toBe("555-303-4444");
+    expect(contact.email).toBe("morgan@example.com");
+    expect(contact.original_source).toBe("website");
+    expect(contact.latest_source).toBe("sign_call");
+    expect(activities.some((a) => a.body === "Called from the yard sign")).toBe(true);
+    expect(activities.some((a) => a.title === "Contacts merged")).toBe(true);
+    await expect(api.mergeContacts(survivorId, survivorId)).rejects.toThrow(/itself/);
+  });
+
   it("rejects empty notes and unknown contacts", async () => {
     const api = new DemoApi();
     const [c] = await api.listContacts();

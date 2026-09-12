@@ -1,9 +1,5 @@
 # KNOWN ISSUES
 
-- **KI-005 (P5, integrity):** `tasks.assigned_to` and `contacts.assigned_to`
-  accept any auth.users id, not just org members (FK only). No cross-tenant data
-  leak (RLS still hides the org's data from the assignee), but a mis-assignment
-  is silently possible. Fix: membership-validating trigger.
 
 - **KI-002 (P6, performance):** Main JS bundle is ~560 kB minified (React + supabase
   + react-query in one chunk). Add route-level code splitting when the app grows.
@@ -18,3 +14,6 @@
 ## Resolved
 - **KI-001** (last-owner removal) — fixed by `00003_owner_guard.sql`, covered by
   executed assertions in `db/tests/01_isolation_test.sql`.
+- **KI-005** (non-member assignees) — fixed by `00007_assignee_guard_and_merge.sql`
+  (membership-validating triggers on contacts/tasks/transactions, change-only so
+  rows with since-removed members stay editable), covered by `db/tests/03_merge_test.sql`.

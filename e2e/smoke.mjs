@@ -68,6 +68,14 @@ await see(page.getByText(/Done \(/), "task moves to done");
 await page.getByRole("link", { name: /Taylor Tester/ }).first().click();
 await see(page.getByText("Task created: Follow up with Taylor"), "task event on contact timeline");
 
+// CRM-001 merge: fold a seeded duplicate into Taylor
+await page.getByRole("link", { name: "Contacts", exact: true }).click();
+await page.getByRole("link", { name: /Taylor Tester/ }).first().click();
+page.once("dialog", (d) => void d.accept());
+await page.getByLabel("Merge a duplicate into this contact").selectOption({ label: "Marcus Lee" });
+await page.getByRole("button", { name: "Merge", exact: true }).click();
+await see(page.getByText("Contacts merged"), "merge recorded on the survivor timeline");
+
 // TXN-001: create a transaction, close it, verify actual GCI math
 await page.getByRole("link", { name: "Transactions" }).click();
 await page.getByLabel("Property address").fill("12 Elm St, Springfield");

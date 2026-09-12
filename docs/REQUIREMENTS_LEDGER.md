@@ -27,8 +27,11 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
 - **Phase:** P2 · **Deps:** SEC-001
 - **Impl:** VERIFIED (schema + demo mode): schema verified by db:test; UI
   list/detail verified by browser e2e; dedupe rules verified in SQL suite + unit
-  tests. Supabase-backed UI path IMPLEMENTED — NOT YET VERIFIED (needs OA-002 +
-  auth UI, KI-003). Merge tooling pending.
+  tests. Merge tooling VERIFIED: admin-only `merge_contacts` RPC (children move,
+  fields fill, §29 attribution preserved, audit-logged) covered by
+  `db/tests/03_merge_test.sql` + demo/e2e; assignee-membership guard (KI-005
+  fix) covered there too. Supabase-backed UI path IMPLEMENTED — NOT YET
+  VERIFIED (needs OA-002 + auth UI, KI-003).
 - **Tests:** db/tests suite ✓, unit tests ✓, e2e/smoke.mjs ✓
 - **Files:** `supabase/migrations/`, `src/features/contacts/`, `src/lib/domain/lead.ts`
 - **Acceptance:** one contact row unifies identity, attribution, consent flags, stage;

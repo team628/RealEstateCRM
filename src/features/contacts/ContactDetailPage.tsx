@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,67 @@ const CONSENT_FIELDS = [
   ["sms_consent", "SMS consent"],
   ["call_consent", "Call consent"],
 ] as const;
+
+function MergeSection({ contactId }: { contactId: string }) {
+  const api = getApi();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [duplicateId, setDuplicateId] = useState("");
+  const { data: contacts } = useQuery({ queryKey: ["contacts"], queryFn: () => api.listContacts() });
+  const others = (contacts ?? []).filter((c) => c.id !== contactId);
+
+  const mergeMutation = useMutation({
+    mutationFn: () => {
+      if (!duplicateId) return Promise.reject(new Error("Choose a duplicate contact to merge."));
+      return api.mergeContacts(contactId, duplicateId);
+    },
+    onSuccess: () => {
+      setDuplicateId("");
+      void queryClient.invalidateQueries();
+      navigate(`/contacts/${contactId}`);
+    },
+  });
+
+  if (others.length === 0) return null;
+  return (
+    <div className="border-t border-border pt-3">
+      <Label htmlFor="merge-select">Merge a duplicate into this contact</Label>
+      <div className="flex gap-2">
+        <Select
+          id="merge-select"
+          value={duplicateId}
+          onChange={(e) => setDuplicateId(e.target.value)}
+        >
+          <option value="">Choose duplicate…</option>
+          {others.map((c) => (
+            <option key={c.id} value={c.id}>
+              {`${c.first_name} ${c.last_name}`.trim() || c.email || c.phone || c.id}
+            </option>
+          ))}
+        </Select>
+        <Button
+          variant="outline"
+          disabled={!duplicateId || mergeMutation.isPending}
+          onClick={() => {
+            if (window.confirm("Merge the selected contact into this one? The duplicate will be removed.")) {
+              mergeMutation.mutate();
+            }
+          }}
+        >
+          Merge
+        </Button>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Timeline, tasks, and transactions move here; this contact&apos;s original source is kept.
+      </p>
+      {mergeMutation.error instanceof Error && (
+        <p role="alert" className="mt-1 text-xs text-destructive">
+          {mergeMutation.error.message}
+        </p>
+      )}
+    </div>
+  );
+}
 
 function AiInsightsCard({ contactId }: { contactId: string }) {
   const api = getApi();
@@ -140,6 +201,8 @@ export default function ContactDetailPage() {
     queryFn: () => api.getContact(id),
   });
   const { data: members } = useQuery({ queryKey: ["members"], queryFn: () => api.listMembers() });
+  const { data: currentUser } = useQuery({ queryKey: ["currentUser"], queryFn: () => api.currentUser() });
+  const isAdmin = currentUser?.role === "owner" || currentUser?.role === "admin";
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ["contact", id] });
@@ -316,6 +379,7 @@ export default function ContactDetailPage() {
                 {patchMutation.error.message}
               </p>
             )}
+            {isAdmin && <MergeSection contactId={id} />}
           </CardContent>
         </Card>
 

@@ -70,6 +70,8 @@ export interface CrmApi {
   addNote(contactId: string, body: string): Promise<void>;
   updateStage(contactId: string, stage: ContactStage): Promise<void>;
   updateContact(contactId: string, patch: UpdateContactRequest): Promise<void>;
+  /** Admin-only: folds duplicate into survivor (children move, fields fill, original attribution preserved). */
+  mergeContacts(survivorId: string, duplicateId: string): Promise<void>;
   /** Runs AI lead classification (server-side in production). Fails when the AI kill switch is off. */
   classifyContact(contactId: string): Promise<import("@/lib/ai/types").AiInsight>;
   listInsights(contactId: string): Promise<import("@/lib/ai/types").AiInsight[]>;

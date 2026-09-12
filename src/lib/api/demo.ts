@@ -327,6 +327,46 @@ export class DemoApi implements CrmApi {
     }
   }
 
+  async mergeContacts(survivorId: string, duplicateId: string): Promise<void> {
+    if (survivorId === duplicateId) throw new Error("cannot merge a contact into itself");
+    const survivor = this.contacts.get(survivorId);
+    const duplicate = this.contacts.get(duplicateId);
+    if (!survivor || !duplicate) throw new Error("contact not found");
+    // demo user is the org owner, so the admin check passes (mirrors SQL RPC)
+
+    survivor.email = survivor.email ?? duplicate.email;
+    survivor.phone = survivor.phone ?? duplicate.phone;
+    if (survivor.first_name === "") survivor.first_name = duplicate.first_name;
+    if (survivor.last_name === "") survivor.last_name = duplicate.last_name;
+    for (const key of ["email_consent", "sms_consent", "call_consent"] as const) {
+      if (survivor[key] === "unknown") survivor[key] = duplicate[key];
+    }
+    if (survivor.captured_at === null) {
+      survivor.original_source = duplicate.original_source;
+      survivor.original_source_detail = duplicate.original_source_detail;
+      survivor.original_utm = duplicate.original_utm;
+      survivor.captured_at = duplicate.captured_at;
+    }
+    if ((duplicate.latest_touch_at ?? "") > (survivor.latest_touch_at ?? "")) {
+      survivor.latest_source = duplicate.latest_source;
+      survivor.latest_source_detail = duplicate.latest_source_detail;
+      survivor.latest_utm = duplicate.latest_utm;
+      survivor.latest_touch_at = duplicate.latest_touch_at;
+    }
+    survivor.lead_score = Math.max(survivor.lead_score, duplicate.lead_score);
+
+    for (const a of this.activities) if (a.contact_id === duplicateId) a.contact_id = survivorId;
+    for (const t of this.tasks.values()) if (t.contact_id === duplicateId) t.contact_id = survivorId;
+    for (const x of this.transactions.values()) if (x.contact_id === duplicateId) x.contact_id = survivorId;
+    for (const i of this.insights) if (i.contact_id === duplicateId) i.contact_id = survivorId;
+
+    this.pushActivity(survivorId, "human", "system", "Contacts merged", null, {
+      merged_contact_id: duplicateId,
+      merged_name: `${duplicate.first_name} ${duplicate.last_name}`.trim(),
+    }, "u-broker");
+    this.contacts.delete(duplicateId);
+  }
+
   async classifyContact(contactId: string): Promise<AiInsight> {
     const contact = this.contacts.get(contactId);
     if (!contact) throw new Error("contact not found");
