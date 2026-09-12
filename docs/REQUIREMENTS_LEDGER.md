@@ -96,10 +96,14 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
   through `queue_message` (SECURITY DEFINER; direct outbox inserts have no
   policy and are proven denied), which enforces consent-granted, kill switches,
   destination presence, idempotent replay, and audit logging — all covered by
-  executed assertions in `db/tests/02_comms_export_test.sql`. Nothing sends yet:
-  provider adapters that drain `queued` rows are NOT STARTED and blocked on
-  OA-004. Voice: NOT STARTED.
-- **Files:** `supabase/migrations/00005_outbox_and_export.sql`, `db/tests/02_*`
+  executed assertions in `db/tests/02_comms_export_test.sql`. Drain engine
+  VERIFIED at unit level: adapter interface + `drainOutbox` worker (kill switch
+  re-checked at send time, bounded retries, terminal-vs-transient failure
+  classification, no silent drops) with 7 executed tests; §12 contract doc at
+  `docs/contracts/email-sms.md`. Nothing sends yet: concrete provider adapters
+  + the scheduled drain edge function are blocked on OA-004. Voice: NOT STARTED.
+- **Files:** `supabase/migrations/00005_outbox_and_export.sql`, `db/tests/02_*`,
+  `src/lib/comms/`, `docs/contracts/email-sms.md`
 
 ## MLS-001 — MLS provider interface
 - **Phase:** P4 · **External:** MLS agreement · **Impl:** NOT STARTED
