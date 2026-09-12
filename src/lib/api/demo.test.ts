@@ -257,6 +257,30 @@ describe("DemoApi vertical slice: capture → contact → timeline → assignmen
     await expect(api.mergeContacts(survivorId, survivorId)).rejects.toThrow(/itself/);
   });
 
+  it("dashboard stats count leads by immutable original source", async () => {
+    const api = new DemoApi();
+    await api.captureLead({
+      idempotencyKey: "stats-key-000001",
+      firstName: "Re",
+      lastName: "Touched",
+      email: "retouch@example.com",
+      phone: "",
+      source: "website",
+    });
+    // second touch from another source must NOT re-attribute the lead
+    await api.captureLead({
+      idempotencyKey: "stats-key-000002",
+      firstName: "Re",
+      lastName: "Touched",
+      email: "retouch@example.com",
+      phone: "",
+      source: "zillow",
+    });
+    const stats = await api.dashboardStats();
+    expect(stats.bySource["zillow"] ?? 0).toBe(0);
+    expect(stats.bySource["website"]).toBeGreaterThanOrEqual(2); // seed + this lead
+  });
+
   it("rejects empty notes and unknown contacts", async () => {
     const api = new DemoApi();
     const [c] = await api.listContacts();

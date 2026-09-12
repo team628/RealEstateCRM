@@ -458,11 +458,17 @@ export class SupabaseApi implements CrmApi {
     const contacts = await this.listContacts();
     const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
     const byStage: DashboardStats["byStage"] = {};
-    for (const c of contacts) byStage[c.stage] = (byStage[c.stage] ?? 0) + 1;
+    const bySource: DashboardStats["bySource"] = {};
+    for (const c of contacts) {
+      byStage[c.stage] = (byStage[c.stage] ?? 0) + 1;
+      const source = c.original_source ?? "unknown";
+      bySource[source] = (bySource[source] ?? 0) + 1;
+    }
     return {
       totalContacts: contacts.length,
       newThisWeek: contacts.filter((c) => Date.parse(c.created_at) > weekAgo).length,
       byStage,
+      bySource,
     };
   }
 }

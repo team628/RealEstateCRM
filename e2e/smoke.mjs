@@ -17,6 +17,7 @@ await page.goto(base + "/", { waitUntil: "networkidle" });
 await see(page.getByText("RealEstateCRM").first(), "app shell renders");
 await see(page.getByText("Demo mode").first(), "demo-mode banner visible");
 await see(page.getByText("Total contacts"), "dashboard stats render");
+await see(page.getByText("Leads by original source"), "source report renders with actual counts");
 
 await page.getByRole("link", { name: "Contacts" }).click();
 await see(page.getByRole("link", { name: /Jordan Miles/ }), "seeded contact listed");

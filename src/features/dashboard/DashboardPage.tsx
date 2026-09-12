@@ -62,6 +62,34 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Leads by original source</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Actual contact counts by immutable first-touch source — later
+                inquiries never re-attribute a lead.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(stats.bySource).length === 0 ? (
+                <p className="text-sm text-muted-foreground">No contacts yet.</p>
+              ) : (
+                <ul className="grid gap-2 sm:grid-cols-3">
+                  {Object.entries(stats.bySource)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([source, n]) => (
+                      <li
+                        key={source}
+                        className="flex items-center justify-between rounded-md bg-muted px-3 py-2 text-sm"
+                      >
+                        <span>{source}</span>
+                        <span className="font-semibold tabular-nums">{n}</span>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
     </div>

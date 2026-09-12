@@ -118,7 +118,12 @@ Phases: P1 Foundation → P2 CRM Core → P3 Intelligence/Automation → P4 Comm
   checklist, J06 automation hooks.
 
 ## RPT-001 — Reporting / money metrics
-- **Phase:** P5 · **Impl:** NOT STARTED
+- **Phase:** P5
+- **Impl:** IN PROGRESS — first slices VERIFIED (demo): pipeline-by-stage +
+  leads-by-original-source on the dashboard (actual counts, §29-immutable
+  attribution — re-touches proven not to re-attribute), Closed GCI with visible
+  formula labeled ACTUAL (§30) on Transactions. Executive dashboard/ROI (J10)
+  pending.
 
 ## OPS-001 — Kill switches
 - **Phase:** P1 · **Deps:** SEC-001

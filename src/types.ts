@@ -139,4 +139,6 @@ export interface DashboardStats {
   totalContacts: number;
   newThisWeek: number;
   byStage: Partial<Record<ContactStage, number>>;
+  /** actual counts keyed by immutable original_source (§29) — never re-attributed */
+  bySource: Record<string, number>;
 }
