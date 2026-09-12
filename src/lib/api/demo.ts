@@ -65,8 +65,12 @@ let activitySeq = 0;
 let taskSeq = 0;
 let eventSeq = 0;
 
+// Strictly monotonic clock: consecutive events never share a timestamp, so
+// ordering and latest-touch comparisons are deterministic even within one ms.
+let lastNowMs = 0;
 function nowIso(): string {
-  return new Date().toISOString();
+  lastNowMs = Math.max(Date.now(), lastNowMs + 1);
+  return new Date(lastNowMs).toISOString();
 }
 
 export class DemoApi implements CrmApi {
