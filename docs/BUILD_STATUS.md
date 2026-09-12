@@ -23,12 +23,14 @@ See KNOWN_ISSUES.md.
 None for current work. Future-phase items in EXTERNAL_REQUIREMENTS.md / OWNER_ACTIONS.md.
 
 ## NEXT HIGHEST-PRIORITY ACTION
-1. When OA-002 lands (Supabase project): apply migrations, verify auth flow,
-   capture RPC, edge function live — the single biggest unlock.
-2. TXN-001 UI slice (create transaction from contact, pipeline board, GCI).
-3. Email/SMS provider adapters draining the outbox (OA-004) + contracts docs.
-4. Contact merge tooling; KI-005 membership-validating assignee trigger.
-5. Reporting (RPT-001) once transactions carry data.
+1. When OA-002 lands (Supabase project): apply the 8 migrations, verify auth
+   flow, capture RPCs, and the AI edge function live — the single biggest unlock.
+2. Property search UI over the MLS interface (demo-verifiable via fake
+   provider; J02 groundwork) + saved buyer criteria on contacts.
+3. Transaction milestones (key_dates) + commission splits.
+4. Populate AI evaluation scenario cases (docs/AI_EVALUATIONS.md suite 1) as a
+   runnable script, executable once OA-003 provides a key.
+5. Concrete comms provider adapters when OA-004 lands (engine is ready).
 
 ## CHECKPOINTS
 - **CHECKPOINT 01 — Foundation Secure: DONE 2026-09-11** (commit 19b2718).
